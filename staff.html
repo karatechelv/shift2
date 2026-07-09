@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>چرخهٔ شیفت - پرسنل</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:tahoma,sans-serif;background:#f0f2f5;padding:12px;}
+.container{max-width:1000px;margin:0 auto;background:#fff;border-radius:12px;padding:16px;}
+h1{font-size:22px;color:#1a3c5e;}
+.sub{color:#888;font-size:13px;margin-bottom:16px;}
+
+.login-box{background:#f8f9fa;padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.login-box input{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+.btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+.btn-primary{background:#1a3c5e;color:#fff;}
+.btn-primary:hover{background:#0f2a40;}
+.btn-secondary{background:#e9ecef;color:#333;}
+.btn-secondary:hover{background:#dde1e5;}
+.btn-danger{background:#dc3545;color:#fff;}
+.btn-danger:hover{background:#c82333;}
+.btn-success{background:#28a745;color:#fff;}
+.btn-success:hover{background:#218838;}
+.btn-warning{background:#ffc107;color:#333;}
+.btn-warning:hover{background:#e0a800;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.badge-admin{background:#1a3c5e;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;}
+.badge-nurse{background:#28a745;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;}
+.hidden{display:none !important;}
+
+.card{background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid #e9ecef;}
+.card h3{font-size:15px;margin-bottom:8px;color:#1a3c5e;display:flex;align-items:center;gap:8px;}
+.card h3 .badge{font-size:10px;background:#1a3c5e;color:#fff;padding:1px 8px;border-radius:10px;}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-item{background:#fff;padding:8px 12px;border-radius:6px;border:1px solid #e9ecef;}
+.info-item label{font-size:11px;color:#888;display:block;}
+.info-item .value{font-size:14px;font-weight:bold;color:#1a3c5e;margin-top:2px;}
+
+.request-form{background:#fff;padding:12px;border-radius:8px;border:1px solid #e9ecef;margin-bottom:10px;}
+.request-form .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;}
+.request-form .row label{font-size:12px;color:#555;min-width:80px;}
+.request-form .row input,.request-form .row select{padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;flex:1;min-width:100px;}
+.request-form .row .btn{font-size:12px;}
+
+.schedule-table{width:100%;border-collapse:collapse;font-size:13px;}
+.schedule-table th,.schedule-table td{padding:6px 8px;border:1px solid #dee2e6;text-align:center;vertical-align:middle;}
+.schedule-table th{background:#e9ecef;}
+.schedule-table .morning{background:#fff3e0;}
+.schedule-table .evening{background:#e3f2fd;}
+.schedule-table .night{background:#e8eaf6;}
+.schedule-table .vacation{background:#ffcdd2;color:#c62828;}
+.schedule-table .notcome{background:#ffcdd2;color:#c62828;}
+
+.status-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;}
+.status-badge.approved{background:#c8e6c9;color:#2e7d32;}
+.status-badge.pending{background:#fff9c4;color:#f57f17;}
+.status-badge.rejected{background:#ffcdd2;color:#c62828;}
+
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:25px;font-size:13px;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:999;}
+#toast.show{opacity:1;}
+
+.footer{text-align:center;font-size:11px;color:#aaa;padding:12px 0 4px;border-top:1px solid #eee;margin-top:20px;}
+.footer a{color:#1a3c5e;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ===== صفحه ورود ===== -->
+<div id="page-login">
+<h1>🔄 چرخهٔ شیفت</h1>
+<div class="sub">پنل پرسنل - مشاهده و درخواست</div>
+
+<div class="login-box">
+  <span style="font-weight:bold;">🔐 ورود پرسنل:</span>
+  <input type="text" id="nurse-code" placeholder="شماره پرسنلی" style="width:150px;">
+  <input type="password" id="nurse-pass" placeholder="رمز عبور" style="width:150px;">
+  <button class="btn btn-primary" id="login-btn">ورود</button>
+  <span id="status-badge"></span>
+</div>
+<div id="login-error" style="color:#dc3545;font-size:13px;display:none;margin-bottom:10px;">شماره پرسنلی یا رمز عبور اشتباه است</div>
+</div>
+
+<!-- ===== پنل پرسنل ===== -->
+<div id="page-nurse" class="hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+  <h1>🔄 چرخهٔ شیفت</h1>
+  <div>
+    <span class="badge-nurse" id="nurse-name-badge">👩‍⚕️ پرسنل</span>
+    <button class="btn btn-secondary btn-sm" id="logout-btn">خروج</button>
+  </div>
+</div>
+<div class="sub" id="nurse-sub">پنل شخصی - مشاهده برنامه و ثبت درخواست</div>
+
+<!-- ===== اطلاعات پرسنل ===== -->
+<div class="card">
+  <h3>👤 اطلاعات پرسنلی</h3>
+  <div class="info-grid" id="nurse-info">
+    <div class="info-item"><label>نام و نام خانوادگی</label><div class="value" id="info-name">-</div></div>
+    <div class="info-item"><label>شماره پرسنلی</label><div class="value" id="info-code">-</div></div>
+    <div class="info-item"><label>سمت</label><div class="value" id="info-role">-</div></div>
+    <div class="info-item"><label>بیمارستان / بخش</label><div class="value" id="info-dept">-</div></div>
+  </div>
+</div>
+
+<!-- ===== برنامه شیفت ===== -->
+<div class="card">
+  <h3>📅 برنامه شیفت‌های من</h3>
+  <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+    <button class="btn btn-secondary btn-sm" id="prev-month">‹ قبل</button>
+    <span style="font-weight:bold;font-size:14px;" id="month-label">ماه جاری</span>
+    <button class="btn btn-secondary btn-sm" id="next-month">بعد ›</button>
+    <button class="btn btn-primary btn-sm" id="today-btn">امروز</button>
+  </div>
+  <div id="nurse-schedule"></div>
+</div>
+
+<!-- ===== درخواست‌ها ===== -->
+<div class="card">
+  <h3>📝 درخواست‌های من</h3>
+  
+  <!-- فرم درخواست جدید -->
+  <div class="request-form">
+    <h4 style="font-size:13px;color:#1a3c5e;margin-bottom:6px;">ثبت درخواست جدید</h4>
+    <div class="row">
+      <label>نوع درخواست:</label>
+      <select id="request-type">
+        <option value="vacation">مرخصی</option>
+        <option value="notcome">نیامدن</option>
+        <option value="shift-change">تغییر شیفت</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>تاریخ:</label>
+      <input type="text" id="request-date" placeholder="مثال: 1404-07-15">
+    </div>
+    <div class="row" id="shift-select-row">
+      <label>شیفت:</label>
+      <select id="request-shift">
+        <option value="morning">صبح</option>
+        <option value="evening">عصر</option>
+        <option value="night">شب</option>
+        <option value="all">کل روز</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>توضیحات:</label>
+      <input type="text" id="request-desc" placeholder="توضیحات (اختیاری)">
+    </div>
+    <div class="row">
+      <button class="btn btn-success" id="submit-request-btn">ثبت درخواست</button>
+    </div>
+  </div>
+  
+  <!-- لیست درخواست‌ها -->
+  <div id="requests-list"></div>
+</div>
+
+<!-- ===== آمار شیفت‌ها ===== -->
+<div class="card">
+  <h3>📊 آمار شیفت‌های من</h3>
+  <div id="nurse-stats"></div>
+</div>
+
+</div>
+
+<div class="footer">
+  ساخته شده توسط <strong>محسن کرامتی لایق</strong> —
+  <a href="mailto:Karatechelv@gmail.com">Karatechelv@gmail.com</a>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ================================================================
+//  داده‌ها - کلید ذخیره‌سازی یکسان با سیستم ادمین و سرپرستار
+// ================================================================
+
+const STORAGE_KEY = 'nurse_system_data';
+
+let data = {
+  hospitals: [],
+  supervisors: [],
+  staff: [],
+  nurses: [],
+  requests: [],
+  requestHistory: [],
+  schedules: {},
+  dailyRequirements: {},
+  settings: { maxConsecutive: 6, enforceNightRest: true }
+};
+
+let currentNurse = null;
+let jy = 1404, jm = 4;
+
+function loadData() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) {
+      const p = JSON.parse(d);
+      if (p && p.hospitals) {
+        data = p;
+        if (!data.requests) data.requests = [];
+        if (!data.requestHistory) data.requestHistory = [];
+        if (!data.schedules) data.schedules = {};
+        if (!data.nurses) data.nurses = [];
+        return true;
+      }
+    }
+  } catch (e) {}
+  return false;
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+// ================================================================
+//  توابع تاریخ شمسی
+// ================================================================
+
+function getTodayJalali() {
+  const now = new Date();
+  const gY = now.getFullYear();
+  const gM = now.getMonth() + 1;
+  const gD = now.getDate();
+  return toJalali(gY, gM, gD);
+}
+
+function div(a, b) { return ~~(a / b); }
+function mod(a, b) { return a - ~~(a / b) * b; }
+
+var jBreaks = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+
+function jalCal(jy) {
+  var bl = jBreaks.length, gy = jy + 621, leapJ = -14, jp = jBreaks[0], jm, jump, leap, leapG, march, n, i;
+  for (i = 1; i < bl; i += 1) {
+    jm = jBreaks[i]; jump = jm - jp;
+    if (jy < jm) break;
+    leapJ = leapJ + div(jump, 33) * 8 + div(mod(jump, 33), 4);
+    jp = jm;
+  }
+  n = jy - jp;
+  leapJ = leapJ + div(n, 33) * 8 + div(mod(n, 33) + 3, 4);
+  if (mod(jump, 33) === 4 && jump - n === 4) leapJ += 1;
+  leapG = div(gy, 4) - div((div(gy, 100) + 1) * 3, 4) - 150;
+  march = 20 + leapJ - leapG;
+  if (jump - n < 6) n = n - jump + div(jump + 4, 33) * 33;
+  leap = mod(mod(n + 1, 33) - 1, 4);
+  if (leap === -1) leap = 4;
+  return { leap: leap, gy: gy, march: march };
+}
+
+function g2d(gy, gm, gd) {
+  var d = div((gy + div(gm - 8, 6) + 100100) * 1461, 4) +
+    div(153 * mod(gm + 9, 12) + 2, 5) + gd - 34840408;
+  d = d - div(div(gy + 100100 + div(gm - 8, 6), 100) * 3, 4) + 752;
+  return d;
+}
+
+function d2g(jdn) {
+  var j, i, gd, gm, gy;
+  j = 4 * jdn + 139361631;
+  j = j + div(div(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
+  i = div(mod(j, 1461), 4) * 5 + 308;
+  gd = div(mod(i, 153), 5) + 1;
+  gm = mod(div(i, 153), 12) + 1;
+  gy = div(j, 1461) - 100100 + div(8 - gm, 6);
+  return { gy: gy, gm: gm, gd: gd };
+}
+
+function j2d(jy, jm, jd) {
+  var r = jalCal(jy);
+  return g2d(r.gy, 3, r.march) + (jm - 1) * 31 - div(jm, 7) * (jm - 7) + jd - 1;
+}
+
+function d2j(jdn) {
+  var gy = d2g(jdn).gy, jy = gy - 621, r = jalCal(jy), jdn1f = g2d(gy, 3, r.march), jd, jm, k;
+  k = jdn - jdn1f;
+  if (k >= 0) {
+    if (k <= 185) {
+      jm = 1 + div(k, 31);
+      jd = mod(k, 31) + 1;
+      return { jy: jy, jm: jm, jd: jd };
+    } else {
+      k -= 186;
+    }
+  } else {
+    jy -= 1;
+    k += 179;
+    if (r.leap === 1) k += 1;
+  }
+  jm = 7 + div(k, 30);
+  jd = mod(k, 30) + 1;
+  return { jy: jy, jm: jm, jd: jd };
+}
+
+function toJalali(gy, gm, gd) {
+  return d2j(g2d(gy, gm, gd));
+}
+
+function toGregorian(jy, jm, jd) {
+  return d2g(j2d(jy, jm, jd));
+}
+
+function isLeapJalaliYear(jy) {
+  return jalCal(jy).leap === 0;
+}
+
+function jalaliMonthLength(jy, jm) {
+  if (jm <= 6) return 31;
+  if (jm <= 11) return 30;
+  if (isLeapJalaliYear(jy)) return 30;
+  return 29;
+}
+
+function weekdayOfJalali(jy, jm, jd) {
+  var g = toGregorian(jy, jm, jd);
+  var jsDate = new Date(g.gy, g.gm - 1, g.gd);
+  var jsDay = jsDate.getDay();
+  return (jsDay + 1) % 7;
+}
+
+const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
+const JMONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
+function faDigits(n) {
+  const map = { '0': '۰', '1': '۱', '2': '۲', '3': '۳', '4': '۴', '5': '۵', '6': '۶', '7': '۷', '8': '۸', '9': '۹' };
+  return String(n).replace(/[0-9]/g, d => map[d]);
+}
+
+function getRoleLabel(r) {
+  const map = { head_nurse: 'سرپرستار', senior: 'پرستار ارشد', nurse: 'پرستار', assistant: 'کمکی', worker: 'کارگر', behyar: 'بهیار', service: 'خدمات' };
+  return map[r] || r;
+}
+
+function scheduleKey(d, y, m) { return d + ':' + y + '-' + pad2(m); }
+function getSchedule(d, y, m) {
+  const k = scheduleKey(d, y, m);
+  if (!data.schedules) data.schedules = {};
+  if (!data.schedules[k]) data.schedules[k] = {};
+  return data.schedules[k];
+}
+
+function getNurseRequests(nurseId) {
+  if (!data.requests) data.requests = [];
+  return data.requests.filter(r => r.nurseId === nurseId);
+}
+
+function getShiftCounts(nurseId, deptId, y, m) {
+  const sched = getSchedule(deptId, y, m);
+  const counts = { morning: 0, evening: 0, night: 0, total: 0 };
+  const days = jalaliMonthLength(y, m);
+  
+  for (let day = 1; day <= days; day++) {
+    const dateKey = y + '-' + pad2(m) + '-' + pad2(day);
+    const dayData = sched[dateKey] || {};
+    ['morning', 'evening', 'night'].forEach(sh => {
+      const d2 = dayData[sh] || { nurses: [] };
+      if ((d2.nurses || []).indexOf(nurseId) !== -1) {
+        counts[sh] += 1;
+        counts.total += 1;
+      }
+    });
+  }
+  return counts;
+}
+
+// ================================================================
+//  رندر پنل پرسنل
+// ================================================================
+
+function renderNursePanel() {
+  if (!currentNurse) return;
+  
+  const nurse = currentNurse;
+  
+  // اطلاعات پرسنلی
+  document.getElementById('info-name').textContent = nurse.fullName || nurse.name;
+  document.getElementById('info-code').textContent = nurse.employeeCode || nurse.code || '---';
+  document.getElementById('info-role').textContent = getRoleLabel(nurse.role);
+  
+  // پیدا کردن بیمارستان
+  const hosp = data.hospitals.find(h => h.id === nurse.hospitalId);
+  const deptName = nurse.department || '---';
+  document.getElementById('info-dept').textContent = hosp ? `${hosp.name} - ${deptName}` : deptName;
+  
+  document.getElementById('nurse-name-badge').textContent = `👩‍⚕️ ${nurse.fullName || nurse.name}`;
+  
+  // برنامه شیفت
+  renderNurseSchedule();
+  
+  // درخواست‌ها
+  renderNurseRequests();
+  
+  // آمار
+  renderNurseStats();
+}
+
+function renderNurseSchedule() {
+  const el = document.getElementById('nurse-schedule');
+  const deptId = currentNurse.hospitalId;
+  const y = jy, m = jm;
+  const sched = getSchedule(deptId, y, m);
+  const days = jalaliMonthLength(y, m);
+  const today = getTodayJalali();
+  
+  // عنوان ماه
+  document.getElementById('month-label').textContent = `${JMONTHS[m-1]} ${faDigits(y)}`;
+  
+  let h = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  WEEKDAYS.forEach(w => { h += `<div style="text-align:center;font-size:11px;color:#888;padding:4px 0;font-weight:bold;">${w}</div>`; });
+  
+  const firstDay = weekdayOfJalali(y, m, 1);
+  for (let i = 0; i < firstDay; i++) { h += '<div style="background:transparent;border:none;min-height:80px;"></div>'; }
+  
+  for (let day = 1; day <= days; day++) {
+    const dateKey = y + '-' + pad2(m) + '-' + pad2(day);
+    const dayData = sched[dateKey] || {};
+    const isToday = (y === today.jy && m === today.jm && day === today.jd);
+    
+    h += `<div style="background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:4px;min-height:80px;">`;
+    h += `<div style="font-size:11px;font-weight:bold;color:#333;display:flex;justify-content:space-between;margin-bottom:3px;">
+      <span>${faDigits(day)}</span>
+      ${isToday ? '<span style="background:#1a3c5e;color:#fff;border-radius:4px;padding:0 5px;font-size:9px;">امروز</span>' : ''}
+    </div>`;
+    
+    // بررسی مرخصی یا نیامدن کل روز
+    const hasFullVacation = (currentNurse.vacations || []).some(v => {
+      const parts = v.split(':');
+      return parts[0] === dateKey && (parts.length === 1 || parts[1] === 'all');
+    });
+    const hasFullNotCome = (currentNurse.notComeRequests || []).some(nc => 
+      nc.date === dateKey && nc.shift === 'all'
+    );
+    
+    if (hasFullVacation) {
+      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;">مرخصی تمام روز</div>`;
+    } else if (hasFullNotCome) {
+      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;">نیامدن تمام روز</div>`;
+    } else {
+      // نمایش شیفت‌ها
+      ['morning', 'evening', 'night'].forEach(sh => {
+        const d2 = dayData[sh] || { nurses: [] };
+        const assigned = d2.nurses || [];
+        const isAssigned = assigned.indexOf(currentNurse.id) !== -1;
+        const shLabel = sh === 'morning' ? 'صبح' : sh === 'evening' ? 'عصر' : 'شب';
+        
+        if (isAssigned) {
+          const isHead = d2.headNurse === currentNurse.id;
+          h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:${
+            sh === 'morning' ? '#fff3e0' : sh === 'evening' ? '#e3f2fd' : '#e8eaf6'
+          };">`;
+          h += `<span style="font-weight:bold;">${shLabel}</span>`;
+          if (isHead) h += ' <span style="background:#28a745;color:#fff;border-radius:2px;padding:0 4px;font-size:7px;">سرپرست</span>';
+          h += '</div>';
+        } else {
+          // بررسی مرخصی یا نیامدن برای این شیفت
+          const hasVacationShift = (currentNurse.vacations || []).some(v => {
+            const parts = v.split(':');
+            return parts[0] === dateKey && parts[1] === sh;
+          });
+          const hasNotComeShift = (currentNurse.notComeRequests || []).some(nc => 
+            nc.date === dateKey && nc.shift === sh
+          );
+          
+          if (hasVacationShift) {
+            h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:#ffcdd2;color:#c62828;">${shLabel} - مرخصی</div>`;
+          } else if (hasNotComeShift) {
+            h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:#ffcdd2;color:#c62828;">${shLabel} - نیامدن</div>`;
+          }
+        }
+      });
+      
+      // اگر هیچ شیفتی نیست
+      const totalShifts = ['morning', 'evening', 'night'].reduce((sum, sh) => {
+        const d2 = dayData[sh] || { nurses: [] };
+        return sum + ((d2.nurses || []).indexOf(currentNurse.id) !== -1 ? 1 : 0);
+      }, 0);
+      if (totalShifts === 0) {
+        h += `<div style="color:#ccc;font-size:9px;text-align:center;margin-top:4px;">--</div>`;
+      }
+    }
+    
+    h += '</div>';
+  }
+  
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+function renderNurseRequests() {
+  const el = document.getElementById('requests-list');
+  const requests = getNurseRequests(currentNurse.id);
+  
+  if (requests.length === 0) {
+    el.innerHTML = '<div style="color:#888;font-size:13px;padding:8px;">هیچ درخواستی ثبت نشده است</div>';
+    return;
+  }
+  
+  let h = '<table class="schedule-table"><tr><th>نوع</th><th>تاریخ</th><th>شیفت</th><th>وضعیت</th><th>توضیحات</th></tr>';
+  requests.slice().reverse().forEach(r => {
+    const statusClass = r.status === 'approved' ? 'approved' : r.status === 'rejected' ? 'rejected' : 'pending';
+    const statusLabel = r.status === 'approved' ? '✅ تایید شده' : r.status === 'rejected' ? '❌ رد شده' : '⏳ در انتظار';
+    const typeLabel = r.type === 'vacation' ? 'مرخصی' : r.type === 'notcome' ? 'نیامدن' : 'تغییر شیفت';
+    const shiftLabel = r.shift === 'all' ? 'کل روز' : r.shift === 'morning' ? 'صبح' : r.shift === 'evening' ? 'عصر' : 'شب';
+    
+    h += `<tr>
+      <td>${typeLabel}</td>
+      <td>${r.date}</td>
+      <td>${shiftLabel}</td>
+      <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+      <td>${r.desc || '---'}</td>
+    </tr>`;
+  });
+  h += '</table>';
+  el.innerHTML = h;
+}
+
+function renderNurseStats() {
+  const el = document.getElementById('nurse-stats');
+  const counts = getShiftCounts(currentNurse.id, currentNurse.hospitalId, jy, jm);
+  
+  const totalDays = jalaliMonthLength(jy, jm);
+  const vacCount = (currentNurse.vacations || []).filter(v => {
+    const parts = v.split(':');
+    const date = parts[0];
+    const [y, m, d] = date.split('-').map(Number);
+    return y === jy && m === jm;
+  }).length;
+  
+  const notComeCount = (currentNurse.notComeRequests || []).filter(nc => {
+    const [y, m, d] = nc.date.split('-').map(Number);
+    return y === jy && m === jm;
+  }).length;
+  
+  let h = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">`;
+  h += `<div class="info-item"><label>شیفت صبح</label><div class="value">${faDigits(counts.morning)}</div></div>`;
+  h += `<div class="info-item"><label>شیفت عصر</label><div class="value">${faDigits(counts.evening)}</div></div>`;
+  h += `<div class="info-item"><label>شیفت شب</label><div class="value">${faDigits(counts.night)}</div></div>`;
+  h += `<div class="info-item"><label>مجموع شیفت‌ها</label><div class="value">${faDigits(counts.total)}</div></div>`;
+  h += `<div class="info-item"><label>مرخصی در این ماه</label><div class="value">${faDigits(vacCount)}</div></div>`;
+  h += `<div class="info-item"><label>نیامدن در این ماه</label><div class="value">${faDigits(notComeCount)}</div></div>`;
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+// ================================================================
+//  تابع جستجوی پرسنل در تمام بخش‌های داده
+// ================================================================
+
+function findNurseByCodeAndPass(code, pass) {
+  // 1. جستجو در supervisors (سرپرستاران)
+  let found = data.supervisors.find(s => 
+    (s.employeeCode === code || s.code === code) && 
+    (s.password === pass || s.pass === pass)
+  );
+  if (found) return { ...found, source: 'supervisor' };
+  
+  // 2. جستجو در nurses (پرسنل)
+  found = data.nurses.find(n => 
+    (n.employeeCode === code || n.code === code) && 
+    (n.password === pass || n.pass === pass)
+  );
+  if (found) return { ...found, source: 'nurse' };
+  
+  // 3. جستجو در staff (کارکنان)
+  found = data.staff.find(s => 
+    (s.employeeCode === code || s.code === code) && 
+    (s.password === pass || s.pass === pass)
+  );
+  if (found) return { ...found, source: 'staff' };
+  
+  return null;
+}
+
+// ================================================================
+//  رویدادها
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // بارگذاری داده‌ها
+  if (!loadData()) {
+    // اگر داده‌ای نبود، داده‌های نمونه ایجاد کن
+    data.hospitals = [
+      { id: 'h1', name: 'بیمارستان امام خمینی', departments: ['ICU', 'CCU', 'اورژانس'] },
+      { id: 'h2', name: 'بیمارستان رسول اکرم', departments: ['ICU', 'CCU', 'داخلی'] }
+    ];
+    data.supervisors = [
+      { id: 's1', hospitalId: 'h1', hospitalName: 'بیمارستان امام خمینی', department: 'ICU', fullName: 'دکتر احمدی', employeeCode: '12345', password: '123456' },
+      { id: 's2', hospitalId: 'h2', hospitalName: 'بیمارستان رسول اکرم', department: 'CCU', fullName: 'دکتر کریمی', employeeCode: '67890', password: '654321' }
+    ];
+    data.nurses = [
+      { id: 'n1', hospitalId: 'h1', hospitalName: 'بیمارستان امام خمینی', department: 'ICU', fullName: 'زهرا احمدی', employeeCode: '11111', password: '111111', role: 'nurse', vacations: [], notComeRequests: [] },
+      { id: 'n2', hospitalId: 'h1', hospitalName: 'بیمارستان امام خمینی', department: 'ICU', fullName: 'مریم رضایی', employeeCode: '22222', password: '222222', role: 'senior', vacations: [], notComeRequests: [] },
+      { id: 'n3', hospitalId: 'h2', hospitalName: 'بیمارستان رسول اکرم', department: 'CCU', fullName: 'فاطمه کریمی', employeeCode: '33333', password: '333333', role: 'nurse', vacations: [], notComeRequests: [] }
+    ];
+    data.requests = [];
+    data.schedules = {};
+    saveData();
+  }
+  
+  const today = getTodayJalali();
+  jy = today.jy;
+  jm = today.jm;
+  
+  // ===== ورود =====
+  document.getElementById('login-btn').addEventListener('click', function() {
+    const code = document.getElementById('nurse-code').value.trim();
+    const pass = document.getElementById('nurse-pass').value.trim();
+    
+    if (!code || !pass) {
+      toast('❌ شماره پرسنلی و رمز عبور را وارد کنید');
+      return;
+    }
+    
+    const nurse = findNurseByCodeAndPass(code, pass);
+    
+    if (nurse) {
+      currentNurse = nurse;
+      document.getElementById('status-badge').innerHTML = '<span class="badge-nurse">✅ وارد شدید</span>';
+      document.getElementById('page-login').classList.add('hidden');
+      document.getElementById('page-nurse').classList.remove('hidden');
+      document.getElementById('login-error').style.display = 'none';
+      
+      renderNursePanel();
+      toast(`✅ خوش آمدید ${nurse.fullName || nurse.name}`);
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      setTimeout(() => document.getElementById('login-error').style.display = 'none', 3000);
+      toast('❌ شماره پرسنلی یا رمز عبور اشتباه است');
+    }
+  });
+  
+  // ===== خروج =====
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    currentNurse = null;
+    document.getElementById('status-badge').innerHTML = '';
+    document.getElementById('page-nurse').classList.add('hidden');
+    document.getElementById('page-login').classList.remove('hidden');
+    document.getElementById('nurse-code').value = '';
+    document.getElementById('nurse-pass').value = '';
+    toast('🚪 خروج');
+  });
+  
+  // ===== تغییر ماه =====
+  document.getElementById('prev-month').addEventListener('click', function() {
+    let newJm = jm - 1, newJy = jy;
+    if (newJm < 1) { newJm = 12; newJy--; }
+    jy = newJy; jm = newJm;
+    renderNurseSchedule();
+    renderNurseStats();
+  });
+  
+  document.getElementById('next-month').addEventListener('click', function() {
+    let newJm = jm + 1, newJy = jy;
+    if (newJm > 12) { newJm = 1; newJy++; }
+    jy = newJy; jm = newJm;
+    renderNurseSchedule();
+    renderNurseStats();
+  });
+  
+  document.getElementById('today-btn').addEventListener('click', function() {
+    const today = getTodayJalali();
+    jy = today.jy;
+    jm = today.jm;
+    renderNurseSchedule();
+    renderNurseStats();
+    toast('📅 رفتن به ماه جاری');
+  });
+  
+  // ===== ثبت درخواست =====
+  document.getElementById('submit-request-btn').addEventListener('click', function() {
+    if (!currentNurse) return;
+    
+    const type = document.getElementById('request-type').value;
+    const date = document.getElementById('request-date').value.trim();
+    const shift = document.getElementById('request-shift').value;
+    const desc = document.getElementById('request-desc').value.trim();
+    
+    if (!date) {
+      toast('❌ تاریخ را وارد کنید');
+      return;
+    }
+    
+    // بررسی فرمت تاریخ
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      toast('❌ فرمت تاریخ صحیح نیست (مثال: 1404-07-15)');
+      return;
+    }
+    
+    // ثبت درخواست
+    if (!data.requests) data.requests = [];
+    data.requests.push({
+      id: uid(),
+      nurseId: currentNurse.id,
+      nurseName: currentNurse.fullName || currentNurse.name,
+      type: type,
+      date: date,
+      shift: shift,
+      desc: desc,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    
+    saveData();
+    
+    // پاک کردن فرم
+    document.getElementById('request-date').value = '';
+    document.getElementById('request-desc').value = '';
+    
+    renderNurseRequests();
+    toast('✅ درخواست شما با موفقیت ثبت شد');
+  });
+  
+  // ===== ورود با کلید Enter =====
+  document.getElementById('nurse-pass').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('login-btn').click();
+    }
+  });
+  
+  document.getElementById('nurse-code').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('login-btn').click();
+    }
+  });
+  
+  // اگر قبلاً لاگین کرده بودیم
+  if (currentNurse) {
+    document.getElementById('page-login').classList.add('hidden');
+    document.getElementById('page-nurse').classList.remove('hidden');
+    renderNursePanel();
+  }
+  
+  toast('👋 به پنل پرسنل خوش آمدید');
+});
+</script>
+</body>
+</html>
