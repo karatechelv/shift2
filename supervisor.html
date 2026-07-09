@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>چرخهٔ شیفت - سرپرستار</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:tahoma,sans-serif;background:#f0f2f5;padding:12px;}
+.container{max-width:1200px;margin:0 auto;background:#fff;border-radius:12px;padding:16px;}
+h1{font-size:22px;color:#1a3c5e;}
+.sub{color:#888;font-size:13px;margin-bottom:16px;}
+.login-box{background:#f8f9fa;padding:10px 14px;border-radius:8px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.login-box input{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;width:150px;}
+.btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+.btn-primary{background:#1a3c5e;color:#fff;}
+.btn-primary:hover{background:#0f2a40;}
+.btn-secondary{background:#e9ecef;color:#333;}
+.btn-secondary:hover{background:#dde1e5;}
+.btn-danger{background:#dc3545;color:#fff;}
+.btn-danger:hover{background:#c82333;}
+.btn-success{background:#28a745;color:#fff;}
+.btn-success:hover{background:#218838;}
+.btn-warning{background:#ffc107;color:#333;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.badge-supervisor{background:#28a745;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;}
+.hidden{display:none !important;}
+.tabs{display:flex;gap:4px;border-bottom:2px solid #dee2e6;margin-bottom:14px;flex-wrap:wrap;}
+.tab{padding:8px 16px;cursor:pointer;border:none;background:none;font-size:14px;color:#888;border-bottom:3px solid transparent;}
+.tab:hover{color:#1a3c5e;}
+.tab.active{color:#1a3c5e;border-bottom-color:#1a3c5e;font-weight:bold;}
+.tab:disabled{opacity:0.5;cursor:not-allowed;}
+.dept-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.dept-chip{padding:5px 12px;border-radius:16px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;}
+.dept-chip:hover{background:#e9ecef;}
+.dept-chip.active{background:#1a3c5e;color:#fff;}
+.dept-chip:disabled{opacity:0.5;cursor:not-allowed;}
+.card{background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid #e9ecef;}
+.card h3{font-size:15px;margin-bottom:8px;color:#1a3c5e;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.weekday{text-align:center;font-size:11px;color:#888;padding:4px 0;font-weight:bold;}
+.day-cell{background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:5px;min-height:100px;}
+.day-cell.empty{background:transparent;border:none;}
+.day-cell.today{background:#e3f2fd;border-color:#1a3c5e;}
+.day-num{font-size:12px;font-weight:bold;color:#333;display:flex;justify-content:space-between;margin-bottom:3px;}
+.day-icons{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px;}
+.day-icons .icon{font-size:18px;line-height:1;}
+.day-icons .icon.morning{color:#f39c12;}
+.day-icons .icon.evening{color:#e67e22;}
+.day-icons .icon.night{color:#2c3e50;}
+.day-icons .icon.rest{color:#27ae60;}
+.day-icons .icon.vacation{color:#f1c40f;}
+.day-icons .icon.notcome{color:#e74c3c;}
+.day-icons .icon.rule{color:#8e44ad;}
+.shift-label{display:flex;justify-content:space-between;font-size:9px;color:#888;}
+.shift-label .short{color:#dc3545;font-weight:bold;}
+.shift-label .head-badge{background:#28a745;color:#fff;border-radius:2px;padding:0 4px;font-size:7px;}
+.chip-list{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0;}
+.chip{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.08);border-radius:3px;padding:1px 4px;font-size:9px;display:flex;align-items:center;gap:2px;}
+.chip .role-tag{font-size:7px;background:#dee2e6;padding:0 3px;border-radius:2px;}
+.chip .vacation-tag{font-size:7px;background:#ffc107;padding:0 3px;border-radius:2px;}
+.chip .rule-tag{font-size:7px;background:#8e44ad;color:#fff;padding:0 3px;border-radius:2px;}
+.chip.head{border-color:#28a745;background:#e8f5e9;}
+.btn-x{background:none;border:none;color:#dc3545;cursor:pointer;font-size:10px;padding:0 2px;}
+.add-select{width:100%;font-size:9px;border:1px dashed #ccc;border-radius:3px;background:transparent;padding:1px;}
+.add-select:disabled{opacity:0.4;}
+.pulse{display:flex;gap:2px;height:3px;margin-top:3px;border-radius:2px;overflow:hidden;}
+.pulse span{flex:1;}
+.pulse .ok.morning{background:#ff9800;}
+.pulse .ok.evening{background:#2196f3;}
+.pulse .ok.night{background:#3f51b5;}
+.pulse .bad{background:#dc3545;}
+.pulse .none{background:#dee2e6;}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.toolbar .spacer{flex:1;}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:25px;font-size:13px;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:999;}
+#toast.show{opacity:1;}
+.month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.month-nav .label{font-size:16px;font-weight:bold;color:#1a3c5e;}
+#status-bar{background:#e8f5e9;padding:6px 12px;border-radius:5px;margin-bottom:12px;font-size:12px;display:none;}
+.today-mark{background:#1a3c5e;color:#fff;border-radius:4px;padding:0 5px;font-size:10px;}
+.profile-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:10px 14px;background:#e8f0fe;border-radius:8px;margin-bottom:12px;}
+.profile-header .avatar{font-size:40px;}
+.profile-header .info{flex:1;}
+.profile-header .info .name{font-size:18px;font-weight:bold;color:#1a3c5e;}
+.profile-header .info .detail{font-size:12px;color:#555;margin:2px 0;}
+.profile-header .info .badge{display:inline-block;padding:1px 10px;border-radius:12px;font-size:11px;background:#28a745;color:#fff;margin:2px 4px 2px 0;}
+.profile-stats{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
+.profile-stats .stat-item{background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:6px 12px;display:flex;align-items:center;gap:6px;font-size:12px;}
+.profile-stats .stat-item .num{font-weight:bold;font-size:16px;color:#1a3c5e;}
+.profile-stats .stat-item .label{color:#888;}
+.profile-back{display:inline-block;margin-bottom:10px;cursor:pointer;color:#1a3c5e;font-size:13px;}
+.profile-back:hover{text-decoration:underline;}
+.staff-item{background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:8px 12px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;cursor:pointer;}
+.staff-item:hover{background:#f8f9fa;}
+.staff-item .info{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.staff-item .info .name{font-weight:bold;}
+.staff-item .info .code{color:#555;font-size:12px;}
+.staff-item .info .role-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:#e3f2fd;color:#1565c0;}
+.staff-item .info .status-tag{font-size:10px;padding:2px 8px;border-radius:10px;}
+.staff-item .info .status-tag.approved{background:#c8e6c9;color:#2e7d32;}
+.staff-item .info .status-tag.rejected{background:#ffcdd2;color:#c62828;}
+.staff-item .info .status-tag.pending{background:#fff9c4;color:#f57f17;}
+.staff-item .actions{display:flex;gap:4px;}
+.staff-password{font-size:11px;color:#555;direction:ltr;display:inline-block;background:#f0f0f0;padding:0 6px;border-radius:3px;}
+.request-item{background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.request-item .info{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.request-item .info .type{font-weight:bold;font-size:11px;}
+.request-item .info .date{color:#555;font-size:11px;}
+.request-item .actions{display:flex;gap:4px;}
+.request-section-title{font-size:14px;font-weight:bold;color:#1a3c5e;margin:12px 0 8px;padding-bottom:4px;border-bottom:2px solid #e9ecef;}
+.notification-item{padding:8px 12px;margin-bottom:4px;border-radius:4px;border-right:3px solid #ffc107;background:#fff3cd;}
+.notification-item .time{font-size:10px;color:#888;}
+.notification-item.approved{background:#d4edda;border-right-color:#28a745;}
+.notification-item.rejected{background:#f8d7da;border-right-color:#dc3545;}
+.notification-item.info{background:#cce5ff;border-right-color:#0066cc;}
+.notification-item.rule{background:#f3e5f5;border-right-color:#8e44ad;}
+.monthly-report-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.monthly-report-table th{background:#1a3c5e;color:#fff;padding:6px 8px;text-align:center;border:1px solid #1a3c5e;}
+.monthly-report-table td{background:#fff;padding:6px 8px;border:1px solid #ddd;vertical-align:top;}
+.monthly-report-table .day-cell{width:40px;text-align:center;font-weight:bold;}
+.monthly-report-table .event-item{padding:2px 4px;margin:1px 0;border-radius:3px;font-size:10px;}
+.monthly-report-table .event-item.approved{background:#d4edda;border-right:2px solid #28a745;}
+.monthly-report-table .event-item.rejected{background:#f8d7da;border-right:2px solid #dc3545;}
+.monthly-report-table .event-item.info{background:#cce5ff;border-right:2px solid #0066cc;}
+.monthly-report-table .event-item.rule{background:#f3e5f5;border-right:2px solid #8e44ad;}
+.monthly-report-table .empty-day{color:#ccc;font-size:11px;}
+.report-month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
+.report-month-nav .label{font-size:16px;font-weight:bold;color:#1a3c5e;}
+.rules-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.rules-table th{background:#1a3c5e;color:#fff;padding:8px 10px;text-align:center;border:1px solid #1a3c5e;}
+.rules-table td{background:#fff;padding:8px 10px;border:1px solid #ddd;vertical-align:middle;}
+.rules-table .rule-input{width:100%;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:tahoma;direction:ltr;text-align:center;}
+.rules-table .rule-input:focus{border-color:#1a3c5e;outline:none;background:#f8f9fa;}
+.rules-table .rule-status{font-size:11px;padding:2px 10px;border-radius:12px;display:inline-block;cursor:pointer;}
+.rules-table .rule-status.active{background:#c8e6c9;color:#2e7d32;}
+.rules-table .rule-status.inactive{background:#ffcdd2;color:#c62828;}
+.rules-table .rule-status.pending{background:#fff9c4;color:#f57f17;}
+.rules-table .staff-name{font-weight:bold;color:#1a3c5e;}
+.rules-table .date-selects{display:flex;gap:3px;flex-wrap:wrap;align-items:center;}
+.rules-table .date-selects select{padding:2px 4px;border:1px solid #ddd;border-radius:3px;font-size:11px;background:#fff;}
+.rules-table .rule-preview{font-size:11px;color:#555;margin-top:2px;direction:ltr;}
+.rules-table .rule-preview .badge{display:inline-block;padding:0 4px;border-radius:3px;font-size:10px;margin:0 1px;}
+.rules-table .rule-preview .badge.morning{background:#fff3e0;color:#e67e22;}
+.rules-table .rule-preview .badge.evening{background:#e3f2fd;color:#1565c0;}
+.rules-table .rule-preview .badge.night{background:#e8eaf6;color:#3f51b5;}
+.rules-table .rule-preview .badge.rest{background:#e8f5e9;color:#2e7d32;}
+.rules-table .rule-actions{display:flex;gap:4px;flex-wrap:wrap;}
+.rules-table .rule-actions .btn-approve{padding:2px 8px;border:none;border-radius:3px;font-size:11px;cursor:pointer;background:#28a745;color:#fff;}
+.rules-table .rule-actions .btn-approve:hover{background:#218838;}
+.rules-table .rule-actions .btn-reject{padding:2px 8px;border:none;border-radius:3px;font-size:11px;cursor:pointer;background:#dc3545;color:#fff;}
+.rules-table .rule-actions .btn-reject:hover{background:#c82333;}
+.supervisor-info{background:#e8f0fe;padding:8px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;}
+.supervisor-info strong{color:#1a3c5e;}
+.footer{text-align:center;font-size:11px;color:#aaa;padding:12px 0 4px;border-top:1px solid #eee;margin-top:20px;}
+.daily-req-table{width:100%;border-collapse:collapse;font-size:12px;}
+.daily-req-table th,.daily-req-table td{border:1px solid #ddd;padding:4px 6px;text-align:center;}
+.daily-req-table th{background:#e9ecef;}
+.daily-req-table input{width:45px;padding:2px;border:1px solid #ddd;border-radius:3px;text-align:center;}
+.daily-req-table input:focus{background:#e8f0fe;border-color:#1a3c5e;}
+.staff-notif-section{border:1px solid #ddd;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff;}
+.staff-notif-section .staff-title{font-weight:bold;font-size:14px;color:#1a3c5e;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:8px;}
+.staff-notif-section .notif-empty{color:#888;font-size:12px;}
+.month-divider{background:#e9ecef;padding:4px 10px;border-radius:4px;font-weight:bold;font-size:13px;color:#1a3c5e;margin:8px 0 4px;}
+.notif-day-divider{background:#f0f0f0;padding:2px 8px;border-radius:3px;font-size:12px;color:#555;margin:4px 0 2px;}
+@media(max-width:700px){.profile-header{flex-direction:column;align-items:flex-start;}.day-cell{min-height:80px;}.day-icons .icon{font-size:14px;}.rules-table td{padding:4px 6px;}.rules-table .date-selects select{font-size:10px;padding:1px 2px;}}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="page-login">
+<h1>🔄 چرخهٔ شیفت</h1>
+<div class="sub">پنل سرپرستار</div>
+<div class="login-box">
+  <span style="font-weight:bold;">🔐 ورود سرپرستار:</span>
+  <input type="text" id="sup-hospital" placeholder="بیمارستان" style="width:140px;">
+  <input type="text" id="sup-dept" placeholder="بخش" style="width:120px;">
+  <input type="text" id="sup-name" placeholder="نام سرپرستار" style="width:140px;">
+  <input type="text" id="sup-code" placeholder="شماره پرسنلی" style="width:120px;">
+  <input type="password" id="sup-password" placeholder="رمز عبور" style="width:120px;">
+  <button class="btn btn-primary" id="login-btn">ورود</button>
+  <span id="status-badge"></span>
+</div>
+<div id="login-error" style="color:#dc3545;font-size:13px;display:none;">اطلاعات وارد شده صحیح نیست</div>
+</div>
+<div id="page-supervisor" class="hidden">
+<h1>🔄 چرخهٔ شیفت</h1>
+<div class="sub">پنل سرپرستار</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+  <span id="status-badge2"></span>
+  <button class="btn btn-secondary btn-sm" id="logout-btn">خروج</button>
+  <span style="color:#888;font-size:11px;">👁 همه بدون رمز می‌توانند برنامه را ببینند</span>
+  <span id="notif-count" style="background:#dc3545;color:#fff;border-radius:12px;padding:0 8px;font-size:11px;display:none;">0</span>
+</div>
+<div id="status-bar"></div>
+<div id="sup-info" style="background:#e8f0fe;padding:8px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;display:none;"></div>
+<div class="dept-row" id="dept-row"></div>
+<div class="tabs">
+  <button class="tab active" data-tab="schedule">📅 برنامه شیفت</button>
+  <button class="tab" data-tab="staff">👥 پرسنل</button>
+  <button class="tab" data-tab="requests">📩 درخواست‌ها</button>
+  <button class="tab" data-tab="notifications">🔔 اعلانات</button>
+  <button class="tab" data-tab="report">📊 گزارش اعلانات</button>
+  <button class="tab" data-tab="rules">⚖️ قوانین</button>
+  <button class="tab" data-tab="profile">👤 پروفایل پرسنل</button>
+  <button class="tab" data-tab="settings">⚙️ تنظیمات</button>
+</div>
+<div id="view-schedule"></div>
+<div id="view-staff" class="hidden"></div>
+<div id="view-requests" class="hidden"></div>
+<div id="view-notifications" class="hidden"></div>
+<div id="view-report" class="hidden"></div>
+<div id="view-rules" class="hidden"></div>
+<div id="view-profile" class="hidden"></div>
+<div id="view-settings" class="hidden"></div>
+</div>
+<div class="footer">
+  ساخته شده توسط <strong>محسن کرامتی لایق</strong> —
+  <a href="mailto:Karatechelv@gmail.com">Karatechelv@gmail.com</a>
+</div>
+</div>
+<div id="toast"></div>
+<script>
+const STORAGE_KEY = 'nurse_system_data';
+function loadData(){
+  try{const d=localStorage.getItem(STORAGE_KEY);if(d){const p=JSON.parse(d);if(p&&p.hospitals)return p;}}catch(e){}
+  return null;
+}
+function saveData(d){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}catch(e){}}
+let data=loadData();
+let isAdmin=false,currentUser=null,currentSup=null;
+
+function toEnglishNumbers(str){const map={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};return String(str).replace(/[۰-۹]/g,d=>map[d]);}
+function div(a,b){return~~(a/b);}
+function mod(a,b){return a-~~(a/b)*b;}
+var jBreaks=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+function jalCal(jy){
+  var bl=jBreaks.length,gy=jy+621,leapJ=-14,jp=jBreaks[0],jm,jump,leap,leapG,march,n,i;
+  for(i=1;i<bl;i+=1){jm=jBreaks[i];jump=jm-jp;if(jy<jm)break;leapJ=leapJ+div(jump,33)*8+div(mod(jump,33),4);jp=jm;}
+  n=jy-jp;leapJ=leapJ+div(n,33)*8+div(mod(n,33)+3,4);
+  if(mod(jump,33)===4&&jump-n===4)leapJ+=1;
+  leapG=div(gy,4)-div((div(gy,100)+1)*3,4)-150;
+  march=20+leapJ-leapG;
+  if(jump-n<6)n=n-jump+div(jump+4,33)*33;
+  leap=mod(mod(n+1,33)-1,4);if(leap===-1)leap=4;
+  return{leap,gy,march};
+}
+function g2d(gy,gm,gd){
+  var d=div((gy+div(gm-8,6)+100100)*1461,4)+div(153*mod(gm+9,12)+2,5)+gd-34840408;
+  d=d-div(div(gy+100100+div(gm-8,6),100)*3,4)+752;
+  return d;
+}
+function d2g(jdn){
+  var j=4*jdn+139361631;j=j+div(div(4*jdn+183187720,146097)*3,4)*4-3908;
+  var i=div(mod(j,1461),4)*5+308;
+  var gd=div(mod(i,153),5)+1,gm=mod(div(i,153),12)+1,gy=div(j,1461)-100100+div(8-gm,6);
+  return{gy,gm,gd};
+}
+function j2d(jy,jm,jd){var r=jalCal(jy);return g2d(r.gy,3,r.march)+(jm-1)*31-div(jm,7)*(jm-7)+jd-1;}
+function d2j(jdn){
+  var gy=d2g(jdn).gy,jy=gy-621,r=jalCal(jy),jdn1f=g2d(gy,3,r.march),k=jdn-jdn1f;
+  if(k>=0){if(k<=185){return{jy,jm:1+div(k,31),jd:mod(k,31)+1};}else{k-=186;}}
+  else{jy-=1;k+=179;if(r.leap===1)k+=1;}
+  return{jy,jm:7+div(k,30),jd:mod(k,30)+1};
+}
+function toJalali(gy,gm,gd){return d2j(g2d(gy,gm,gd));}
+function toGregorian(jy,jm,jd){return d2g(j2d(jy,jm,jd));}
+function isLeapJalaliYear(jy){return jalCal(jy).leap===0;}
+function jalaliMonthLength(jy,jm){if(jm<=6)return 31;if(jm<=11)return 30;return isLeapJalaliYear(jy)?30:29;}
+function weekdayOfJalali(jy,jm,jd){var g=toGregorian(jy,jm,jd);var d=new Date(g.gy,g.gm-1,g.gd);return(d.getDay()+1)%7;}
+function getTodayJalali(){var now=new Date();return toJalali(now.getFullYear(),now.getMonth()+1,now.getDate());}
+const WEEKDAYS=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+const JMONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+function getRoleLabel(r){const map={head_nurse:'سرپرستار',senior:'پرستار ارشد',nurse:'پرستار',assistant:'کمکی',worker:'کارگر',behyar:'بهیار',service:'خدمات'};return map[r]||r;}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2000);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function pad2(n){return String(n).padStart(2,'0');}
+function faDigits(n){const map={'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};return String(n).replace(/[0-9]/g,d=>map[d]);}
+function toPersianNumber(n){const str=String(n);const map={'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};return str.replace(/[0-9]/g,d=>map[d]);}
+function formatDate(ds){if(!ds)return '';const p=ds.split('-');if(p.length!==3)return ds;return toPersianNumber(p[0])+'.'+toPersianNumber(p[1])+'.'+toPersianNumber(p[2]);}
+function getDailyReq(deptId,dateKey,shiftId){if(!data.dailyRequirements)data.dailyRequirements={};if(!data.dailyRequirements[deptId])data.dailyRequirements[deptId]={};if(!data.dailyRequirements[deptId][dateKey])data.dailyRequirements[deptId][dateKey]={};if(!data.dailyRequirements[deptId][dateKey][shiftId])data.dailyRequirements[deptId][dateKey][shiftId]={nurse:4,service:1,helper:1,behyar:1};return data.dailyRequirements[deptId][dateKey][shiftId];}
+function scheduleKey(d,y,m){return d+':'+y+'-'+pad2(m);}
+function getSchedule(d,y,m){const k=scheduleKey(d,y,m);if(!data.schedules)data.schedules={};if(!data.schedules[k])data.schedules[k]={};return data.schedules[k];}
+function generateSchedule(d,y,m){
+  const validStaffIds=data.staff.map(s=>s.id);
+  const allStaff=data.nurses.filter(n=>n.departmentId===d&&validStaffIds.includes(n.id));
+  if(allStaff.length===0){toast('هیچ پرسنلی ثبت نشده');return;}
+  const days=jalaliMonthLength(y,m),sched={};
+  const nurses=allStaff.filter(n=>['head_nurse','senior','nurse'].includes(n.role));
+  const services=allStaff.filter(n=>n.role==='service');
+  const helpers=allStaff.filter(n=>n.role==='assistant');
+  const behyars=allStaff.filter(n=>n.role==='behyar');
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id&&validStaffIds.includes(s.id));
+  let allNotifs=(data.notifications||[]).filter(n=>n.status==='approved'||n.status==='active');
+  staffList.forEach(staff=>{
+    const notifs=(data.notifications||[]).filter(n=>n.staffId===staff.id&&(n.status==='approved'||n.status==='active'));
+    notifs.forEach(n=>{allNotifs.push({...n,staffName:staff.fullName,staffCode:staff.employeeCode,staffId:staff.id});});
+  });
+  for(let day=1;day<=days;day++){
+    const dateKey=y+'-'+pad2(m)+'-'+pad2(day);
+    sched[dateKey]={};
+    ['morning','evening','night'].forEach(shift=>{
+      const req=getDailyReq(d,dateKey,shift);
+      const needNurse=req.nurse||4;
+      let availableNurses=nurses.filter(n=>{
+        const vacs=n.vacations||[];
+        const isVacation=vacs.some(v=>{const parts=v.split(':');return parts[0]===dateKey&&(parts.length===1||parts[1]===shift||parts[1]==='all');});
+        if(isVacation)return false;
+        const notCome=n.notComeRequests||[];
+        const isNotCome=notCome.some(nc=>nc.date===dateKey&&(nc.shift===shift||nc.shift==='all'));
+        if(isNotCome)return false;
+        const staff=staffList.find(s=>s.id===n.id);
+        if(staff&&staff.rules){
+          const dateRules=staff.rules.dateRestrictions||'';
+          if(dateRules){const dates=dateRules.split('|');const matched=dates.some(d=>{const parts=d.split(':');return parts[0]===dateKey&&(parts[1]===shift||parts[1]==='all');});if(matched)return false;}
+          const dayRestrictions=staff.rules.dayRestrictions||'';
+          if(dayRestrictions){const wd=weekdayOfJalali(y,m,day);const dayName=WEEKDAYS[wd];if(dayRestrictions.includes(dayName))return false;}
+        }
+        const ruleNotifs=allNotifs.filter(rn=>rn.staffId===n.id&&rn.type==='rule'&&rn.date===dateKey&&(rn.shift===shift||rn.shift==='all'));
+        if(ruleNotifs.length>0)return true;
+        if(!validStaffIds.includes(n.id))return false;
+        return true;
+      });
+      const priorityNurses=availableNurses.filter(n=>allNotifs.some(notif=>notif.staffId===n.id&&notif.date===dateKey&&(notif.shift===shift||notif.shift==='all')));
+      const otherNurses=availableNurses.filter(n=>!allNotifs.some(notif=>notif.staffId===n.id&&notif.date===dateKey&&(notif.shift===shift||notif.shift==='all')));
+      const sortedNurses=[...priorityNurses,...otherNurses];
+      const chosenNurses=sortedNurses.slice(0,needNurse).map(n=>n.id);
+      const allChosen=[...chosenNurses];
+      let head=null;
+      if(chosenNurses.length>0)head=chosenNurses[0];
+      sched[dateKey][shift]={nurses:allChosen,headNurse:head};
+    });
+  }
+  const k=scheduleKey(d,y,m);data.schedules[k]=sched;saveData(data);toast('برنامه تولید شد');
+}
+function clearSchedule(d,y,m){const k=scheduleKey(d,y,m);data.schedules[k]={};saveData(data);toast('پاک شد');}
+
+let activeDept='icu';
+let activeTab='schedule';
+let activeSetupDept='icu';
+let jy=1404,jm=4;
+let reportJy=1404,reportJm=4;
+let swapMode=false;
+let swapSelection=null;
+let profileStaffId=null;
+let profileJy=1404,profileJm=4;
+
+function renderDeptRow(){
+  const el=document.getElementById('dept-row');
+  let h='';
+  data.departments.forEach(d=>{h+='<button class="dept-chip '+(d.id===activeDept?'active':'')+'" data-dept="'+d.id+'">'+d.name+'</button>';});
+  el.innerHTML=h;
+}
+
+function renderSchedule(){
+  const el=document.getElementById('view-schedule');
+  const d=activeDept,y=jy,m=jm;
+  const monthLabel=JMONTHS[m-1]+' '+faDigits(y);
+  const deptNurses=data.nurses.filter(n=>n.departmentId===d);
+  const nurseMap={};deptNurses.forEach(n=>nurseMap[n.id]=n);
+  const sched=getSchedule(d,y,m);
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  const validStaffIds=staffList.map(s=>s.id);
+  let allNotifs=(data.notifications||[]).filter(n=>n.status==='approved'||n.status==='active');
+  staffList.forEach(staff=>{
+    const notifs=(data.notifications||[]).filter(n=>n.staffId===staff.id&&(n.status==='approved'||n.status==='active'));
+    notifs.forEach(n=>{allNotifs.push({...n,staffName:staff.fullName,staffCode:staff.employeeCode});});
+  });
+  const days=jalaliMonthLength(y,m);
+  const today=getTodayJalali();
+  let h='';
+  if(isAdmin){h+='<div class="toolbar"><button class="btn btn-success btn-sm" id="gen-btn">⚡ تولید</button><button class="btn btn-danger btn-sm" id="clear-btn">🗑 پاک</button><button class="btn '+(swapMode?'btn-warning':'btn-secondary')+' btn-sm" id="swap-btn">'+(swapMode?'✓ جابجایی':'⇄ جابجایی')+'</button><div class="spacer"></div></div>';}
+  let canGoNext=true,canGoPrev=true;
+  if(!isAdmin){
+    if(jy>today.jy||(jy===today.jy&&jm>today.jm))canGoNext=false;
+    if(jy<today.jy||(jy===today.jy&&jm<today.jm))canGoPrev=false;
+    if(jy>today.jy||(jy===today.jy&&jm>today.jm)){jy=today.jy;jm=today.jm;renderSchedule();return;}
+  }
+  h+='<div class="month-nav"><div><button class="btn btn-secondary btn-sm" id="prev-month" '+(canGoPrev?'':'disabled')+'>‹ قبل</button></div><div class="label">'+monthLabel+'</div><div><button class="btn btn-secondary btn-sm" id="next-month" '+(canGoNext?'':'disabled')+'>بعد ›</button></div></div>';
+  h+='<div class="cal-grid">';
+  WEEKDAYS.forEach(w=>{h+='<div class="weekday">'+w+'</div>';});
+  const firstDay=weekdayOfJalali(y,m,1);
+  for(let i=0;i<firstDay;i++){h+='<div class="day-cell empty"></div>';}
+  for(let day=1;day<=days;day++){
+    const dateKey=y+'-'+pad2(m)+'-'+pad2(day);
+    const dayData=sched[dateKey]||{};
+    const isToday=(y===today.jy&&m===today.jm&&day===today.jd);
+    const dayNotifs=allNotifs.filter(n=>n.date===dateKey);
+    h+='<div class="day-cell '+(isToday?'today':'')+'"><div class="day-num"><span>'+faDigits(day)+'</span>'+(isToday?'<span class="today-mark">امروز</span>':'')+'</div>';
+    if(dayNotifs.length>0){
+      h+='<div style="font-size:8px;margin-bottom:3px;background:#f8f9fa;padding:2px 4px;border-radius:3px;">';
+      dayNotifs.forEach(n=>{
+        let icon='📌',cls='';
+        if(n.type==='vacation'){icon='📅';cls='vacation';}
+        else if(n.type==='not_come'){icon='🚫';cls='notcome';}
+        else if(n.type==='custom_shift'){icon='📋';cls='custom';}
+        else if(n.type==='rule'){icon='⚖️';cls='rule';}
+        if(n.status==='approved'||n.status==='active'){cls+=' approved';}
+        else if(n.status==='rejected'){cls+=' rejected';}
+        h+='<span class="event-badge '+cls+'" style="margin:1px 2px;display:inline-block;font-size:7px;">'+icon+' '+n.staffName+'</span>';
+      });
+      h+='</div>';
+    }
+    ['morning','evening','night'].forEach(sh=>{
+      const d2=dayData[sh]||{nurses:[],headNurse:null};
+      const assigned=d2.nurses||[], head=d2.headNurse;
+      const req=getDailyReq(d,dateKey,sh);
+      const totalNeed=(req.nurse||4)+(req.service||1)+(req.helper||1)+(req.behyar||1);
+      const short=assigned.length<totalNeed;
+      const label=sh==='morning'?'صبح':sh==='evening'?'عصر':'شب';
+      h+='<div class="shift-row '+sh+(short?' understaffed':'')+'"><div class="shift-label"><span><b>'+label+'</b>'+(head?'<span class="head-badge">سرپرست</span>':'')+'</span><span class="'+(short?'short':'')+'">'+faDigits(assigned.length)+'/'+faDigits(totalNeed)+'</span></div><div class="chip-list">';
+      assigned.forEach(nid=>{
+        if(!validStaffIds.includes(nid))return;
+        const n=nurseMap[nid];if(!n)return;
+        const isSel=swapSelection&&swapSelection.date===dateKey&&swapSelection.shift===sh&&swapSelection.nurse===nid;
+        const isHead=head===nid;
+        const hasVac=(n.vacations||[]).some(v=>{const parts=v.split(':');return parts[0]===dateKey&&(parts.length===1||parts[1]===sh||parts[1]==='all');});
+        const hasNotCome=(n.notComeRequests||[]).some(nc=>nc.date===dateKey&&(nc.shift===sh||nc.shift==='all'));
+        const isCustom=(n.customShifts||[]).some(cs=>{const parts=cs.split(':');return parts[0]===dateKey&&parts[1]===sh;});
+        const hasRule=allNotifs.some(notif=>notif.staffId===nid&&notif.type==='rule'&&notif.date===dateKey&&(notif.shift===sh||notif.shift==='all')&&(notif.status==='approved'||notif.status==='active'));
+        if(hasVac||hasNotCome){
+          h+='<span class="chip" style="opacity:0.6;background:#f5f5f5;cursor:default;">'+n.name+'<span class="role-tag">'+getRoleLabel(n.role)+'</span>'+(hasVac?'<span class="vacation-tag">مرخصی</span>':'')+(hasNotCome?'<span class="vacation-tag" style="background:#ffcdd2;color:#c62828;">نیامدن</span>':'')+'</span>';
+        }else{
+          h+='<span class="chip '+(isHead?'head':'')+(isAdmin&&swapMode?' selectable':'')+(isSel?' selected':'')+'" data-date="'+dateKey+'" data-shift="'+sh+'" data-nurse="'+nid+'">'+n.name+'<span class="role-tag">'+getRoleLabel(n.role)+'</span>'+(isCustom?'<span class="vacation-tag" style="background:#4caf50;color:#fff;">سفارشی</span>':'')+(hasRule?'<span class="rule-tag">قانون</span>':'')+(isAdmin?'<button class="btn-x" data-action="remove" data-date="'+dateKey+'" data-shift="'+sh+'" data-nurse="'+nid+'">×</button>':'')+'</span>';
+        }
+      });
+      h+='</div>';
+      if(isAdmin){h+='<select class="add-select" data-role="add-nurse" data-date="'+dateKey+'" data-shift="'+sh+'"><option value="">+ افزودن...</option>';const available=deptNurses.filter(n=>assigned.indexOf(n.id)===-1&&validStaffIds.includes(n.id));available.forEach(n=>{h+='<option value="'+n.id+'">'+n.name+'</option>';});h+='</select>';}
+      h+='</div>';
+    });
+    h+='<div class="pulse">';
+    ['morning','evening','night'].forEach(sh=>{
+      const d2=dayData[sh]||{nurses:[]};
+      const assigned=d2.nurses||[];
+      const req=getDailyReq(d,dateKey,sh);
+      const totalNeed=(req.nurse||4)+(req.service||1)+(req.helper||1)+(req.behyar||1);
+      if(assigned.length===0&&totalNeed===0){h+='<span class="none"></span>';}
+      else{h+='<span class="'+(assigned.length<totalNeed?'bad':'ok '+sh)+'"></span>';}
+    });
+    h+='</div></div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function renderStaff(){
+  const el=document.getElementById('view-staff');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  let h='';
+  h+='<div class="card"><h3>➕ ثبت پرسنل جدید</h3>';
+  h+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;padding:8px;background:#fff;border:1px solid #e9ecef;border-radius:6px;">';
+  h+='<div style="width:100%;font-size:12px;color:#888;margin-bottom:4px;">بیمارستان: <strong>'+(currentSup?.hospitalName||'')+'</strong> | بخش: <strong>'+(currentSup?.department||'')+'</strong></div>';
+  h+='<input type="text" id="new-staff-name" placeholder="نام کامل" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;flex:1;min-width:100px;">';
+  h+='<input type="text" id="new-staff-code" placeholder="کد پرسنلی" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;width:120px;">';
+  h+='<input type="text" id="new-staff-password" placeholder="رمز عبور" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;width:120px;">';
+  h+='<select id="new-staff-role" style="padding:4px 6px;border:1px solid #ddd;border-radius:4px;">';
+  h+='<option value="nurse">پرستار</option><option value="service">خدمات</option><option value="assistant">کمکی</option>';
+  h+='<option value="behyar">بهیار</option><option value="worker">کارگر</option>';
+  h+='</select>';
+  h+='<button class="btn btn-success btn-sm" id="add-staff-btn">+ افزودن پرسنل</button>';
+  h+='</div></div>';
+  h+='<div class="card"><h3>👥 لیست پرسنل</h3>';
+  if(staffList.length===0){h+='<div style="color:#888;font-size:13px;padding:8px;">هیچ پرسنلی ثبت نشده است</div>';}
+  else{
+    staffList.forEach(s=>{
+      h+='<div class="staff-item" onclick="openProfile(\''+s.id+'\')">';
+      h+='<div class="info">';
+      h+='<span class="name">'+s.fullName+'</span>';
+      h+='<span class="code">کد: '+s.employeeCode+'</span>';
+      h+='<span class="staff-password">رمز: '+s.password+'</span>';
+      h+='<span class="role-tag">'+getRoleLabel(s.role)+'</span>';
+      h+='<span style="font-size:10px;color:#888;">وضعیت: '+(s.status==='approved'?'✅ فعال':'⏳ در انتظار')+'</span>';
+      h+='</div>';
+      h+='<div class="actions">';
+      h+='<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();editStaff(\''+s.id+'\')" style="margin-left:4px;">✏️</button>';
+      h+='<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteStaff(\''+s.id+'\')">🗑</button>';
+      h+='</div>';
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function openProfile(id){profileStaffId=id;activeTab='profile';const today=getTodayJalali();profileJy=today.jy;profileJm=today.jm;renderAll();}
+window.openProfile=openProfile;
+
+function editStaff(id){
+  const staff=data.staff.find(s=>s.id===id);
+  if(!staff){toast('پرسنل یافت نشد');return;}
+  const newName=prompt('نام جدید:',staff.fullName);
+  if(newName&&newName.trim()){staff.fullName=newName.trim();const nurse=data.nurses.find(n=>n.id===id);if(nurse)nurse.name=newName.trim();saveData(data);renderStaff();toast('ویرایش شد');}
+}
+window.editStaff=editStaff;
+
+// ================================================================
+// حذف پرسنل - کامل با حذف از گزارش اعلانات
+// ================================================================
+function deleteStaff(id){
+  if(!confirm('آیا از حذف این پرسنل مطمئن هستید؟'))return;
+  data.staff=data.staff.filter(s=>s.id!==id);
+  data.nurses=data.nurses.filter(n=>n.id!==id);
+  data.notifications=(data.notifications||[]).filter(n=>n.staffId!==id);
+  data.requests=(data.requests||[]).filter(r=>r.staffId!==id);
+  data.staffRequests=(data.staffRequests||[]).filter(r=>r.staffId!==id);
+  data.requestHistory=(data.requestHistory||[]).filter(r=>r.staffId!==id);
+  if(data.schedules){
+    for(let key in data.schedules){
+      let sched=data.schedules[key];
+      if(!sched)continue;
+      for(let date in sched){
+        if(!sched[date])continue;
+        for(let shift in sched[date]){
+          if(!sched[date][shift])continue;
+          if(sched[date][shift].nurses){sched[date][shift].nurses=sched[date][shift].nurses.filter(nid=>nid!==id);}
+          if(sched[date][shift].headNurse===id){sched[date][shift].headNurse=(sched[date][shift].nurses&&sched[date][shift].nurses.length>0)?sched[date][shift].nurses[0]:null;}
+        }
+      }
+    }
+  }
+  saveData(data);
+  renderStaff();
+  renderReport(); // <-- آپدیت گزارش اعلانات
+  renderSchedule(); // <-- آپدیت تقویم
+  if(activeTab==='profile'){activeTab='staff';renderAll();}else{renderAll();}
+  toast('پرسنل حذف شد');
+}
+window.deleteStaff=deleteStaff;
+
+function renderRequests(){
+  const el=document.getElementById('view-requests');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  const today=getTodayJalali();
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  const staffIds=staffList.map(s=>s.id);
+  const staffRequests=data.staffRequests?data.staffRequests.filter(r=>staffIds.includes(r.staffId)&&r.status==='pending'):[];
+  let h='<div class="card"><h3>📩 درخواست‌های پرسنل</h3>';
+  h+='<div class="request-section-title">📨 درخواست‌های ارسال شده توسط پرسنل</div>';
+  if(staffRequests.length===0){h+='<div style="color:#888;font-size:13px;padding:8px;">هیچ درخواستی از طرف پرسنل ارسال نشده است</div>';}
+  else{
+    staffRequests.forEach(r=>{
+      const staff=data.staff.find(s=>s.id===r.staffId);
+      let typeLabel='',shiftLabel='';
+      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';
+      if(r.details.shift==='morning')shiftLabel='☀️ صبح';else if(r.details.shift==='evening')shiftLabel='🌤 عصر';else if(r.details.shift==='night')shiftLabel='🌙 شب';else if(r.details.shift==='all')shiftLabel='📅 کل روز';
+      h+=`<div class="request-item"><div class="info"><span class="type">${typeLabel}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${formatDate(r.details.date)}</span><span class="date">🕐 ${shiftLabel}</span>${r.message?`<span style="color:#888;font-size:11px;">📝 ${r.message}</span>`:''}</div><div class="actions"><button class="btn btn-success btn-sm" onclick="approveStaffRequest('${r.id}')">✅ تأیید</button><button class="btn btn-danger btn-sm" onclick="rejectStaffRequest('${r.id}')">❌ رد</button><button class="btn btn-warning btn-sm" onclick="editStaffRequest('${r.id}')">✏️ ویرایش</button></div></div>`;
+    });
+  }
+  h+=`<div class="request-section-title" style="margin-top:20px;">📝 ثبت درخواست جدید توسط سرپرستار</div>`;
+  h+=`<div style="background:#e8f0fe;padding:10px;border-radius:6px;margin-bottom:12px;"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+    <select id="req-staff" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;min-width:120px;">${staffList.map(s=>`<option value="${s.id}">${s.fullName}</option>`).join('')}</select>
+    <select id="req-type" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="vacation">📅 مرخصی</option><option value="custom_shift">📋 شیفت سفارشی</option><option value="not_come">❌ نیامدن</option></select>
+    <select id="req-year" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}" ${y===today.jy?'selected':''}>${faDigits(y)}</option>`).join('')}</select>
+    <select id="req-month" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${JMONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===today.jm?'selected':''}>${m}</option>`).join('')}</select>
+    <select id="req-day" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===today.jd?'selected':''}>${faDigits(d)}</option>`).join('')}</select>
+    <select id="req-shift" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="morning">☀️ صبح</option><option value="evening">🌤 عصر</option><option value="night">🌙 شب</option><option value="all">📅 کل روز</option></select>
+    <button class="btn btn-success btn-sm" id="submit-request-btn">➕ ثبت درخواست</button>
+  </div></div>`;
+  const supervisorRequests=data.requests?data.requests.filter(r=>staffIds.includes(r.staffId)&&r.status==='pending'):[];
+  if(supervisorRequests.length>0){
+    h+='<div class="request-section-title">📋 درخواست‌های ثبت شده توسط سرپرستار</div>';
+    supervisorRequests.forEach(r=>{
+      const staff=data.staff.find(s=>s.id===r.staffId);
+      let typeLabel='',shiftLabel='';
+      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';
+      if(r.details.shift==='morning')shiftLabel='☀️ صبح';else if(r.details.shift==='evening')shiftLabel='🌤 عصر';else if(r.details.shift==='night')shiftLabel='🌙 شب';else if(r.details.shift==='all')shiftLabel='📅 کل روز';
+      h+=`<div class="request-item"><div class="info"><span class="type">${typeLabel}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${formatDate(r.details.date)}</span><span class="date">🕐 ${shiftLabel}</span></div><div class="actions"><button class="btn btn-success btn-sm" onclick="approveRequest('${r.id}')">✅ تأیید</button><button class="btn btn-danger btn-sm" onclick="rejectRequest('${r.id}')">❌ رد</button></div></div>`;
+    });
+  }
+  el.innerHTML=h;
+  document.getElementById('submit-request-btn')?.addEventListener('click',function(){
+    const staffId=document.getElementById('req-staff').value;
+    const type=document.getElementById('req-type').value;
+    const year=document.getElementById('req-year').value;
+    const month=document.getElementById('req-month').value;
+    const day=document.getElementById('req-day').value;
+    const shift=document.getElementById('req-shift').value;
+    const dateKey=year+'-'+pad2(month)+'-'+pad2(day);
+    const staff=data.staff.find(s=>s.id===staffId);
+    if(!staff){toast('پرسنل نامعتبر');return;}
+    const exist=data.requests.find(r=>r.staffId===staffId&&r.details.date===dateKey&&r.details.shift===shift&&r.status==='pending');
+    if(exist){toast('این درخواست قبلاً ثبت شده');return;}
+    data.requests.push({id:uid(),staffId:staffId,type:type,details:{date:dateKey,shift:shift},status:'pending',message:'',createdAt:new Date().toISOString()});
+    saveData(data);
+    renderRequests();
+    toast('✅ درخواست ثبت شد');
+  });
+}
+
+function approveStaffRequest(id){
+  const req=data.staffRequests.find(r=>r.id===id);
+  if(!req){toast('درخواست یافت نشد');return;}
+  req.status='approved';
+  const staff=data.staff.find(s=>s.id===req.staffId);
+  const nurse=data.nurses.find(n=>n.id===req.staffId);
+  if(staff){
+    if(req.type==='vacation'){
+      if(!staff.vacations)staff.vacations=[];
+      const fullDate=req.details.shift==='all'?req.details.date:req.details.date+':'+req.details.shift;
+      if(!staff.vacations.includes(fullDate))staff.vacations.push(fullDate);
+      if(nurse&&!nurse.vacations.includes(fullDate))nurse.vacations.push(fullDate);
+    }else if(req.type==='custom_shift'){
+      if(!staff.customShifts)staff.customShifts=[];
+      const fullDate=req.details.date+':'+req.details.shift;
+      if(!staff.customShifts.includes(fullDate))staff.customShifts.push(fullDate);
+      if(nurse&&!nurse.customShifts.includes(fullDate))nurse.customShifts.push(fullDate);
+    }else if(req.type==='not_come'){
+      if(!staff.notComeRequests)staff.notComeRequests=[];
+      if(!staff.notComeRequests.find(r=>r.date===req.details.date&&r.shift===req.details.shift)){
+        staff.notComeRequests.push({date:req.details.date,shift:req.details.shift});
+        if(nurse&&!nurse.notComeRequests.find(r=>r.date===req.details.date&&r.shift===req.details.shift)){
+          nurse.notComeRequests.push({date:req.details.date,shift:req.details.shift});
+        }
+      }
+    }
+  }
+  addNotification(req.type,req.staffId,staff?.fullName||'نامشخص',req.details.date,req.details.shift,'approved');
+  data.staffRequests=data.staffRequests.filter(r=>r.id!==id);
+  saveData(data);
+  generateSchedule(activeDept,jy,jm);
+  renderRequests();renderSchedule();renderNotifications();
+  toast('✅ درخواست پرسنل تأیید شد');
+}
+function rejectStaffRequest(id){
+  const req=data.staffRequests.find(r=>r.id===id);
+  if(!req){toast('درخواست یافت نشد');return;}
+  req.status='rejected';
+  const staff=data.staff.find(s=>s.id===req.staffId);
+  addNotification(req.type,req.staffId,staff?.fullName||'نامشخص',req.details.date,req.details.shift,'rejected');
+  data.staffRequests=data.staffRequests.filter(r=>r.id!==id);
+  saveData(data);
+  renderRequests();renderNotifications();
+  toast('❌ درخواست پرسنل رد شد');
+}
+function editStaffRequest(id){
+  const req=data.staffRequests.find(r=>r.id===id);
+  if(!req){toast('درخواست یافت نشد');return;}
+  const newDate=prompt('تاریخ جدید (مثال: 1404-07-15):',req.details.date);
+  if(newDate&&newDate.trim()){req.details.date=newDate.trim();saveData(data);renderRequests();toast('درخواست ویرایش شد');}
+}
+function approveRequest(id){
+  const req=data.requests.find(r=>r.id===id);
+  if(!req){toast('درخواست یافت نشد');return;}
+  req.status='approved';
+  const staff=data.staff.find(s=>s.id===req.staffId);
+  const nurse=data.nurses.find(n=>n.id===req.staffId);
+  if(staff){
+    if(req.type==='vacation'){
+      if(!staff.vacations)staff.vacations=[];
+      const fullDate=req.details.shift==='all'?req.details.date:req.details.date+':'+req.details.shift;
+      if(!staff.vacations.includes(fullDate))staff.vacations.push(fullDate);
+      if(nurse&&!nurse.vacations.includes(fullDate))nurse.vacations.push(fullDate);
+    }else if(req.type==='custom_shift'){
+      if(!staff.customShifts)staff.customShifts=[];
+      const fullDate=req.details.date+':'+req.details.shift;
+      if(!staff.customShifts.includes(fullDate))staff.customShifts.push(fullDate);
+      if(nurse&&!nurse.customShifts.includes(fullDate))nurse.customShifts.push(fullDate);
+    }else if(req.type==='not_come'){
+      if(!staff.notComeRequests)staff.notComeRequests=[];
+      if(!staff.notComeRequests.find(r=>r.date===req.details.date&&r.shift===req.details.shift)){
+        staff.notComeRequests.push({date:req.details.date,shift:req.details.shift});
+        if(nurse&&!nurse.notComeRequests.find(r=>r.date===req.details.date&&r.shift===req.details.shift)){
+          nurse.notComeRequests.push({date:req.details.date,shift:req.details.shift});
+        }
+      }
+    }
+  }
+  addNotification(req.type,req.staffId,staff?.fullName||'نامشخص',req.details.date,req.details.shift,'approved');
+  data.requestHistory=data.requestHistory||[];
+  data.requestHistory.push({...req});
+  data.requests=data.requests.filter(r=>r.id!==id);
+  saveData(data);
+  generateSchedule(activeDept,jy,jm);
+  renderRequests();renderSchedule();renderNotifications();
+  toast('✅ درخواست تأیید شد');
+}
+function rejectRequest(id){
+  const req=data.requests.find(r=>r.id===id);
+  if(!req){toast('درخواست یافت نشد');return;}
+  req.status='rejected';
+  const staff=data.staff.find(s=>s.id===req.staffId);
+  addNotification(req.type,req.staffId,staff?.fullName||'نامشخص',req.details.date,req.details.shift,'rejected');
+  data.requestHistory=data.requestHistory||[];
+  data.requestHistory.push({...req});
+  data.requests=data.requests.filter(r=>r.id!==id);
+  saveData(data);
+  renderRequests();renderNotifications();
+  toast('❌ درخواست رد شد');
+}
+
+function renderNotifications(){
+  const el=document.getElementById('view-notifications');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  try{
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  let h='<div class="card"><h3>🔔 اعلانات پرسنل</h3>';
+  if(staffList.length===0){h+='<div style="color:#888;font-size:13px;">هیچ پرسنلی ثبت نشده است</div>';}
+  else{
+    staffList.forEach(staff=>{
+      const notifs=(data.notifications||[]).filter(n=>n.staffId===staff.id);
+      h+=`<div class="staff-notif-section"><div class="staff-title">👤 ${staff.fullName} (کد: ${staff.employeeCode})</div>`;
+      if(notifs.length===0){h+=`<div class="notif-empty">هیچ اعلانی برای این پرسنل وجود ندارد</div>`;}
+      else{
+        const months={};
+        notifs.forEach(n=>{
+          if(n.date&&n.date!=='—'){
+            const parts=n.date.split('-');
+            if(parts.length===3){const key=parts[0]+'-'+parts[1];if(!months[key])months[key]=[];months[key].push(n);}
+            else{if(!months['other'])months['other']=[];months['other'].push(n);}
+          }else{if(!months['other'])months['other']=[];months['other'].push(n);}
+        });
+        const sortedMonths=Object.keys(months).sort((a,b)=>{if(a==='other')return 1;if(b==='other')return-1;return b.localeCompare(a);});
+        sortedMonths.forEach(monthKey=>{
+          const monthNotifs=months[monthKey];
+          let monthLabel=monthKey;
+          if(monthKey!=='other'){const parts=monthKey.split('-');monthLabel=JMONTHS[parseInt(parts[1])-1]+' '+toPersianNumber(parts[0]);}
+          else monthLabel='سایر';
+          h+=`<div class="month-divider">📆 ${monthLabel}</div>`;
+          const days={};
+          monthNotifs.forEach(n=>{
+            if(n.date&&n.date!=='—'){const key=n.date;if(!days[key])days[key]=[];days[key].push(n);}
+            else{if(!days['other'])days['other']=[];days['other'].push(n);}
+          });
+          const sortedDays=Object.keys(days).sort((a,b)=>{if(a==='other')return 1;if(b==='other')return-1;return a.localeCompare(b);});
+          sortedDays.forEach(dayKey=>{
+            const dayNotifs=days[dayKey];
+            let dayLabel=dayKey;
+            if(dayKey!=='other'){dayLabel=formatDate(dayKey);}else dayLabel='بدون تاریخ';
+            h+=`<div class="notif-day-divider">📌 ${dayLabel}</div>`;
+            dayNotifs.slice().reverse().forEach(n=>{
+              const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
+              const statusLabel=n.status==='approved'||n.status==='active'?'✅ تأیید شد':n.status==='rejected'?'❌ رد شد':'ℹ️ اطلاع';
+              const statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
+              if(n.type==='rule')statusClass='rule';
+              let shiftLabel='';
+              if(n.shift==='morning')shiftLabel='☀️ صبح';
+              else if(n.shift==='evening')shiftLabel='🌤 عصر';
+              else if(n.shift==='night')shiftLabel='🌙 شب';
+              else if(n.shift==='all')shiftLabel='📅 کل روز';
+              else if(n.shift==='—')shiftLabel='—';
+              h+=`<div class="notification-item ${statusClass}">
+                <div><strong>${typeLabel}</strong></div>
+                ${n.date&&n.date!=='—'?`<div style="font-size:12px;">تاریخ: ${formatDate(n.date)} | شیفت: ${shiftLabel}</div>`:''}
+                <div style="font-size:12px;color:${(n.status==='approved'||n.status==='active')?'#28a745':n.status==='rejected'?'#dc3545':'#0066cc'};font-weight:bold;">${statusLabel}</div>
+                <div class="time">${new Date(n.time).toLocaleString('fa-IR')}</div>
+              </div>`;
+            });
+          });
+        });
+      }
+      h+=`</div>`;
+    });
+  }
+  h+='</div>';
+  el.innerHTML=h;
+  }catch(err){
+    console.error('renderNotifications error:',err);
+    el.innerHTML='<div class="card">⚠️ خطا در بارگذاری اعلانات. جزئیات خطا در کنسول مرورگر (F12) موجود است: '+err.message+'</div>';
+  }
+}
+
+function renderReport(){
+  const el=document.getElementById('view-report');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  const y=reportJy||jy,m=reportJm||jm;
+  const daysInMonth=jalaliMonthLength(y,m);
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  let allNotifs=(data.notifications||[]).filter(n=>n.status==='approved'||n.status==='active');
+  staffList.forEach(staff=>{
+    const notifs=(data.notifications||[]).filter(n=>n.staffId===staff.id&&(n.status==='approved'||n.status==='active'));
+    notifs.forEach(n=>{allNotifs.push({...n,staffName:staff.fullName,staffCode:staff.employeeCode});});
+  });
+  const monthNotifs=allNotifs.filter(n=>{
+    if(n.date&&n.date!=='—'){const parts=n.date.split('-');if(parts.length===3){return parseInt(parts[0])===y&&parseInt(parts[1])===m;}}
+    return false;
+  });
+  const daysMap={};
+  for(let d=1;d<=daysInMonth;d++){const key=y+'-'+pad2(m)+'-'+pad2(d);daysMap[d]=[];}
+  monthNotifs.forEach(n=>{
+    if(n.date&&n.date!=='—'){const parts=n.date.split('-');if(parts.length===3){const day=parseInt(parts[2]);if(daysMap[day]){daysMap[day].push(n);}}}
+  });
+  let h='';
+  h+=`<div class="card"><h3>📊 گزارش ماهیانه اعلانات</h3>`;
+  h+=`<div class="report-month-nav"><button class="btn btn-secondary btn-sm" onclick="changeReportMonth(-1)">‹ ماه قبل</button><span class="label">${JMONTHS[m-1]} ${faDigits(y)}</span><button class="btn btn-secondary btn-sm" onclick="changeReportMonth(1)">ماه بعد ›</button></div>`;
+  h+=`<table class="monthly-report-table"><thead><tr><th style="width:40px;">روز</th><th>رویدادها</th></tr></thead><tbody>`;
+  let hasAny=false;
+  for(let d=1;d<=daysInMonth;d++){
+    const events=daysMap[d]||[];
+    const wd=weekdayOfJalali(y,m,d);
+    const dayName=WEEKDAYS[wd];
+    h+=`<tr><td class="day-cell">${faDigits(d)}<br><span style="font-size:9px;color:#888;">${dayName}</span></td><td class="event-cell">`;
+    if(events.length===0){h+=`<span class="empty-day">—</span>`;}
+    else{
+      events.forEach(n=>{
+        const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
+        const statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
+        if(n.type==='rule')statusClass='rule';
+        const statusLabel=(n.status==='approved'||n.status==='active')?'✅':n.status==='rejected'?'❌':'ℹ️';
+        let shiftLabel='';
+        if(n.shift==='morning')shiftLabel='صبح';
+        else if(n.shift==='evening')shiftLabel='عصر';
+        else if(n.shift==='night')shiftLabel='شب';
+        else if(n.shift==='all')shiftLabel='کل روز';
+        else if(n.shift==='—')shiftLabel='—';
+        h+=`<div class="event-item ${statusClass}"><strong>${n.staffName}</strong> (کد: ${n.staffCode}) ${typeLabel} ${statusLabel}`;
+        if(shiftLabel!=='—')h+=` | 🕐 ${shiftLabel}`;
+        h+=`</div>`;
+        hasAny=true;
+      });
+    }
+    h+=`</td></tr>`;
+  }
+  h+=`</tbody></table>`;
+  if(!hasAny){h+=`<div style="color:#888;font-size:13px;padding:8px;text-align:center;">هیچ اعلانی برای این ماه وجود ندارد</div>`;}
+  h+=`</div>`;
+  el.innerHTML=h;
+}
+function changeReportMonth(delta){
+  let newMonth=reportJm+delta,newYear=reportJy;
+  if(newMonth>12){newMonth=1;newYear++;}
+  if(newMonth<1){newMonth=12;newYear--;}
+  reportJy=newYear;reportJm=newMonth;
+  renderReport();
+}
+
+function addNotification(type,staffId,staffName,date,shift,status){
+  if(!data.notifications)data.notifications=[];
+  data.notifications.push({id:uid(),type:type,staffId:staffId,staffName:staffName,date:date||'—',shift:shift||'—',status:status||'info',time:Date.now(),seen:false});
+  saveData(data);
+  updateNotifications();
+}
+function updateNotifications(){
+  const count=(data.notifications||[]).filter(n=>!n.seen).length;
+  const el=document.getElementById('notif-count');
+  if(count>0){el.style.display='inline';el.textContent=count;}else{el.style.display='none';}
+}
+
+// ================================================================
+// صفحه قوانین
+// ================================================================
+function renderRules(){
+  const el=document.getElementById('view-rules');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  const today=getTodayJalali();
+  let h='<div class="card"><h3>⚖️ قوانین سرپرستار</h3>';
+  h+='<div style="font-size:12px;color:#888;margin-bottom:8px;">الگو را با کاما جدا کنید: صبح,صبح,عصر,تعطیل,شب,شب</div>';
+  h+='<div style="font-size:11px;color:#888;margin-bottom:10px;">✅ کلمات مجاز: <b>صبح</b>، <b>عصر</b>، <b>شب</b>، <b>تعطیل</b></div>';
+  if(staffList.length===0){h+='<div style="color:#888;font-size:13px;padding:8px;">هیچ پرسنلی ثبت نشده است</div>';}
+  else{
+    h+=`<table class="rules-table">`;
+    h+=`<thead><tr><th style="width:16%;">نام پرسنل</th><th style="width:24%;">الگوی قانون</th><th style="width:20%;">تاریخ شروع</th><th style="width:12%;">وضعیت</th><th style="width:14%;">پیش‌نمایش</th><th style="width:14%;">عملیات</th></tr></thead>`;
+    h+=`<tbody>`;
+    staffList.forEach(staff=>{
+      const rules=staff.rules||{};
+      const pattern=rules.pattern||'';
+      const startDate=rules.startDate||(today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd));
+      const isActive=rules.active===true;
+      const isPending=rules.active===undefined||rules.active===null;
+      let statusClass='pending';
+      let statusLabel='⏳ در انتظار';
+      if(isActive){statusClass='active';statusLabel='✅ فعال';}
+      const existingNotif=(data.notifications||[]).find(n=>n.staffId===staff.id&&n.type==='rule'&&(n.status==='approved'||n.status==='active'));
+      if(existingNotif&&!isActive){statusClass='active';statusLabel='✅ فعال (تایید شده)';}
+      let previewHtml='';
+      if(pattern){
+        const parts=pattern.split(',').map(p=>p.trim());
+        const previewParts=parts.slice(0,5);
+        previewHtml=previewParts.map(p=>{
+          const cls=p==='صبح'?'morning':p==='عصر'?'evening':p==='شب'?'night':p==='تعطیل'?'rest':'';
+          return `<span class="badge ${cls}">${p}</span>`;
+        }).join('');
+        if(parts.length>5)previewHtml+=' <span style="color:#888;font-size:10px;">+...</span>';
+      }
+      h+=`<tr data-staff="${staff.id}">`;
+      h+=`<td class="staff-name">${staff.fullName}</td>`;
+      h+=`<td><input type="text" class="rule-pattern-input" data-staff="${staff.id}" value="${pattern}" placeholder="مثلاً: صبح,صبح,عصر,تعطیل,شب,شب" style="width:100%;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:tahoma;direction:ltr;text-align:center;"></td>`;
+      h+=`<td><div class="date-selects">`;
+      h+=`<select class="rule-start-year" data-staff="${staff.id}">`;
+      for(let y=today.jy-1;y<=today.jy+1;y++){h+=`<option value="${y}" ${y===parseInt(startDate.split('-')[0])?'selected':''}>${faDigits(y)}</option>`;}
+      h+=`</select>`;
+      h+=`<select class="rule-start-month" data-staff="${staff.id}">`;
+      JMONTHS.forEach((m,i)=>{h+=`<option value="${i+1}" ${i+1===parseInt(startDate.split('-')[1])?'selected':''}>${m}</option>`;});
+      h+=`</select>`;
+      h+=`<select class="rule-start-day" data-staff="${staff.id}">`;
+      for(let d=1;d<=31;d++){h+=`<option value="${d}" ${d===parseInt(startDate.split('-')[2])?'selected':''}>${faDigits(d)}</option>`;}
+      h+=`</select>`;
+      h+=`</div></td>`;
+      h+=`<td><span class="rule-status ${statusClass}">${statusLabel}</span></td>`;
+      h+=`<td><div class="rule-preview">${previewHtml||'<span style="color:#ccc;">—</span>'}</div></td>`;
+      h+=`<td><div class="rule-actions">`;
+      if(!isActive && !existingNotif){
+        h+=`<button class="btn-approve" onclick="approveRule('${staff.id}')">✅ تایید</button>`;
+      }
+      if(isActive || existingNotif){
+        h+=`<button class="btn-reject" onclick="rejectRule('${staff.id}')">❌ غیرفعال</button>`;
+      }
+      h+=`</div></td>`;
+      h+=`</tr>`;
+    });
+    h+=`</tbody></table>`;
+    h+=`<div style="margin-top:8px;font-size:11px;color:#888;">💡 برای تغییر قانون، متن را ویرایش کنید. سپس دکمه تایید را بزنید تا وارد گزارش اعلانات شود.</div>`;
+  }
+  h+=`</div>`;
+  el.innerHTML=h;
+  
+  document.querySelectorAll('.rule-pattern-input').forEach(input=>{
+    input.addEventListener('change',function(){
+      const staffId=this.dataset.staff;
+      const pattern=this.value.trim();
+      const staff=data.staff.find(s=>s.id===staffId);
+      if(!staff){toast('پرسنل یافت نشد');return;}
+      if(!staff.rules)staff.rules={};
+      staff.rules.pattern=pattern;
+      staff.rules.active=false;
+      const nurse=data.nurses.find(n=>n.id===staffId);
+      if(nurse){if(!nurse.rules)nurse.rules={};nurse.rules.pattern=pattern;nurse.rules.active=false;}
+      saveData(data);
+      renderRules();
+      toast('قانون ویرایش شد، برای فعال‌سازی دکمه تایید را بزنید');
+    });
+  });
+  document.querySelectorAll('.rule-start-year,.rule-start-month,.rule-start-day').forEach(sel=>{
+    sel.addEventListener('change',function(){
+      const staffId=this.dataset.staff;
+      const row=this.closest('tr');
+      const year=row.querySelector('.rule-start-year').value;
+      const month=row.querySelector('.rule-start-month').value;
+      const day=row.querySelector('.rule-start-day').value;
+      const startDate=year+'-'+pad2(month)+'-'+pad2(day);
+      const staff=data.staff.find(s=>s.id===staffId);
+      if(!staff){toast('پرسنل یافت نشد');return;}
+      if(!staff.rules)staff.rules={};
+      staff.rules.startDate=startDate;
+      const nurse=data.nurses.find(n=>n.id===staffId);
+      if(nurse){if(!nurse.rules)nurse.rules={};nurse.rules.startDate=startDate;}
+      saveData(data);
+      toast('تاریخ شروع ذخیره شد');
+    });
+  });
+}
+
+// ================================================================
+// تایید قانون - وارد شدن به گزارش اعلانات
+// ================================================================
+window.approveRule = function(staffId) {
+  const staff = data.staff.find(s => s.id === staffId);
+  if (!staff) { toast('پرسنل یافت نشد'); return; }
+  if (!staff.rules || !staff.rules.pattern) { toast('لطفاً ابتدا قانون را وارد کنید'); return; }
+  
+  const pattern = staff.rules.pattern;
+  const startDate = staff.rules.startDate || (getTodayJalali().jy + '-' + pad2(getTodayJalali().jm) + '-' + pad2(getTodayJalali().jd));
+  
+  // حذف قوانین قبلی این پرسنل
+  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule'));
+  
+  // ساخت قانون
+  const parts = pattern.split(',').map(p => p.trim());
+  const startParts = startDate.split('-');
+  let currentJY = parseInt(startParts[0]), currentJM = parseInt(startParts[1]), currentJD = parseInt(startParts[2]);
+  if (isNaN(currentJY) || isNaN(currentJM) || isNaN(currentJD)) {
+    const today = getTodayJalali();
+    currentJY = today.jy; currentJM = today.jm; currentJD = today.jd;
+  }
+  
+  let patternIndex = 0;
+  const maxDays = 365;
+  for (let i = 0; i < maxDays; i++) {
+    const dateKey = currentJY + '-' + pad2(currentJM) + '-' + pad2(currentJD);
+    const shiftType = parts[patternIndex % parts.length];
+    
+    let shift = '';
+    if (shiftType === 'صبح') shift = 'morning';
+    else if (shiftType === 'عصر') shift = 'evening';
+    else if (shiftType === 'شب') shift = 'night';
+    else shift = 'all';
+    
+    data.notifications.push({
+      id: uid(),
+      type: 'rule',
+      staffId: staffId,
+      staffName: staff.fullName,
+      date: dateKey,
+      shift: shift,
+      status: 'approved',
+      pattern: pattern,
+      time: Date.now(),
+      seen: false
+    });
+    
+    patternIndex++;
+    const daysInMonth = jalaliMonthLength(currentJY, currentJM);
+    currentJD++;
+    if (currentJD > daysInMonth) { currentJD = 1; currentJM++; if (currentJM > 12) { currentJM = 1; currentJY++; } }
+    if (currentJY > startParts[0] + 1) break;
+  }
+  
+  staff.rules.active = true;
+  const nurse = data.nurses.find(n => n.id === staffId);
+  if (nurse) { if (!nurse.rules) nurse.rules = {}; nurse.rules.active = true; }
+  
+  saveData(data);
+  renderRules();
+  renderReport(); // <-- آپدیت گزارش اعلانات
+  renderSchedule(); // <-- آپدیت تقویم
+  updateNotifications();
+  toast('✅ قانون تایید شد و وارد گزارش اعلانات گردید');
+};
+
+window.rejectRule = function(staffId) {
+  const staff = data.staff.find(s => s.id === staffId);
+  if (!staff) { toast('پرسنل یافت نشد'); return; }
+  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule'));
+  if (staff.rules) staff.rules.active = false;
+  const nurse = data.nurses.find(n => n.id === staffId);
+  if (nurse && nurse.rules) nurse.rules.active = false;
+  saveData(data);
+  renderRules();
+  renderReport();
+  renderSchedule();
+  updateNotifications();
+  toast('❌ قانون غیرفعال شد');
+};
+
+function renderProfile(){
+  const el=document.getElementById('view-profile');
+  if(!isAdmin||!profileStaffId){el.innerHTML='<div class="card">🔒 لطفاً یک پرسنل را انتخاب کنید</div>';return;}
+  const staff=data.staff.find(s=>s.id===profileStaffId);
+  if(!staff){el.innerHTML='<div class="card">❌ پرسنل یافت نشد</div>';return;}
+  const y=profileJy,m=profileJm;
+  const daysInMonth=jalaliMonthLength(y,m);
+  const today=getTodayJalali();
+  const monthLabel=JMONTHS[m-1]+' '+faDigits(y);
+  const nurse=data.nurses.find(n=>n.id===staff.id);
+  const sched=getSchedule(activeDept,y,m);
+  
+  let morningCount=0,eveningCount=0,nightCount=0,restCount=0,vacationCount=0,notcomeCount=0;
+  const dayData={};
+  for(let d=1;d<=daysInMonth;d++){
+    const dateKey=y+'-'+pad2(m)+'-'+pad2(d);
+    const daySched=sched[dateKey]||{};
+    const isVacation=(nurse?.vacations||[]).some(v=>{const parts=v.split(':');return parts[0]===dateKey&&(parts.length===1||parts[1]==='all'||parts[1]==='morning'||parts[1]==='evening'||parts[1]==='night');});
+    const isNotCome=(nurse?.notComeRequests||[]).some(nc=>nc.date===dateKey);
+    const isRest=!daySched.morning&&!daySched.evening&&!daySched.night&&!isVacation&&!isNotCome;
+    const shifts=[];
+    if(daySched.morning&&daySched.morning.nurses&&daySched.morning.nurses.includes(staff.id)){shifts.push('morning');morningCount++;}
+    if(daySched.evening&&daySched.evening.nurses&&daySched.evening.nurses.includes(staff.id)){shifts.push('evening');eveningCount++;}
+    if(daySched.night&&daySched.night.nurses&&daySched.night.nurses.includes(staff.id)){shifts.push('night');nightCount++;}
+    if(isVacation)vacationCount++;
+    if(isNotCome)notcomeCount++;
+    if(isRest&&shifts.length===0&&!isVacation&&!isNotCome){restCount++;}
+    dayData[d]={shifts,isVacation,isNotCome,isRest};
+  }
+  
+  let h='';
+  h+=`<div class="profile-back" onclick="closeProfile()">‹ بازگشت به لیست پرسنل</div>`;
+  h+=`<div class="profile-header"><div class="avatar">👤</div><div class="info"><div class="name">${staff.fullName}</div>`;
+  h+=`<div class="detail">🆔 کد: ${staff.employeeCode} | 📋 نقش: ${getRoleLabel(staff.role)}</div>`;
+  h+=`<div class="detail">🔑 رمز عبور: <span style="direction:ltr;background:#eee;padding:0 6px;border-radius:3px;">${staff.password}</span></div>`;
+  h+=`<span class="badge">${staff.status==='approved'?'✅ فعال':'⏳ در انتظار'}</span>`;
+  h+=`</div></div>`;
+  
+  h+=`<div class="profile-stats">`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">☀️</span> <span class="num">${morningCount}</span> <span class="label">صبح</span></div>`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">⛅</span> <span class="num">${eveningCount}</span> <span class="label">عصر</span></div>`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">🌙</span> <span class="num">${nightCount}</span> <span class="label">شب</span></div>`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">🏖️</span> <span class="num">${restCount}</span> <span class="label">استراحت</span></div>`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">📅</span> <span class="num">${vacationCount}</span> <span class="label">مرخصی</span></div>`;
+  h+=`<div class="stat-item"><span style="font-size:18px;">❌</span> <span class="num">${notcomeCount}</span> <span class="label">نیامدن</span></div>`;
+  h+=`</div>`;
+  
+  h+=`<div class="month-nav"><div><button class="btn btn-secondary btn-sm" onclick="changeProfileMonth(-1)">‹ قبل</button></div><div class="label">${monthLabel}</div><div><button class="btn btn-secondary btn-sm" onclick="changeProfileMonth(1)">بعد ›</button></div></div>`;
+  h+=`<div class="cal-grid">`;
+  WEEKDAYS.forEach(w=>{h+='<div class="weekday">'+w+'</div>';});
+  const firstDay=weekdayOfJalali(y,m,1);
+  for(let i=0;i<firstDay;i++){h+='<div class="day-cell empty"></div>';}
+  for(let d=1;d<=daysInMonth;d++){
+    const data2=dayData[d]||{shifts:[],isVacation:false,isNotCome:false,isRest:true};
+    const isToday=(y===today.jy&&m===today.jm&&d===today.jd);
+    h+='<div class="day-cell '+(isToday?'today':'')+'">';
+    h+='<div class="day-num"><span>'+faDigits(d)+'</span></div>';
+    h+='<div class="day-icons">';
+    if(data2.isVacation){h+='<span class="icon vacation">📅</span>';}
+    else if(data2.isNotCome){h+='<span class="icon notcome">❌</span>';}
+    else if(data2.isRest&&data2.shifts.length===0){h+='<span class="icon rest">🏖️</span>';}
+    else{
+      data2.shifts.forEach(sh=>{
+        if(sh==='morning')h+='<span class="icon morning">☀️</span>';
+        else if(sh==='evening')h+='<span class="icon evening">⛅</span>';
+        else if(sh==='night')h+='<span class="icon night">🌙</span>';
+      });
+      if(data2.shifts.length===0&&!data2.isVacation&&!data2.isNotCome){h+='<span class="icon rest">🏖️</span>';}
+    }
+    h+='</div></div>';
+  }
+  h+='</div>';
+  
+  h+=`<div class="card" style="margin-top:12px;"><h3>⚖️ قوانین فعال</h3>`;
+  const rules=staff.rules||{};
+  const pattern=rules.pattern||'';
+  const isActive=rules.active===true;
+  const notifRules=(data.notifications||[]).filter(n=>n.staffId===staff.id&&n.type==='rule'&&(n.status==='approved'||n.status==='active'));
+  if((!pattern||!isActive)&&notifRules.length===0){
+    h+=`<div style="color:#888;font-size:13px;padding:6px 0;">هیچ قانون فعالی برای این پرسنل ثبت نشده است</div>`;
+  }else{
+    if(pattern)h+=`<div class="rule-item"><span class="rule-text">📋 <span class="highlight">${pattern}</span></span></div>`;
+    if(notifRules.length>0){
+      h+=`<div style="margin-top:6px;font-size:11px;color:#555;">تعداد ${notifRules.length} روز قانون در این ماه:</div>`;
+      const monthRules=notifRules.filter(r=>{
+        const parts=r.date.split('-');
+        return parseInt(parts[0])===y&&parseInt(parts[1])===m;
+      });
+      if(monthRules.length>0){
+        h+=`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">`;
+        monthRules.forEach(r=>{
+          const parts=r.date.split('-');
+          const day=parseInt(parts[2]);
+          const shiftLabel=r.shift==='morning'?'☀️':r.shift==='evening'?'⛅':r.shift==='night'?'🌙':'🏖️';
+          h+=`<span style="background:#e9ecef;padding:0 6px;border-radius:3px;font-size:10px;">${faDigits(day)} ${shiftLabel}</span>`;
+        });
+        h+=`</div>`;
+      }
+    }
+  }
+  h+=`<div style="margin-top:8px;"><button class="btn btn-warning btn-sm" onclick="editRulesFromProfile('${staff.id}')">✏️ ویرایش قوانین</button></div>`;
+  h+=`</div>`;
+  
+  h+=`<div class="card"><h3>📩 درخواست‌های اخیر</h3>`;
+  const recentRequests=(data.requestHistory||[]).filter(r=>r.staffId===staff.id).slice(-5);
+  if(recentRequests.length===0){h+=`<div style="color:#888;font-size:13px;padding:6px 0;">هیچ درخواستی وجود ندارد</div>`;}
+  else{
+    h+=`<div class="request-history-list">`;
+    recentRequests.reverse().forEach(r=>{
+      const typeLabel=r.type==='vacation'?'📅 مرخصی':r.type==='custom_shift'?'📋 شیفت سفارشی':r.type==='not_come'?'❌ نیامدن':'📝 ویرایش';
+      let shiftLabel='';if(r.details?.shift==='morning')shiftLabel='صبح';else if(r.details?.shift==='evening')shiftLabel='عصر';else if(r.details?.shift==='night')shiftLabel='شب';else if(r.details?.shift==='all')shiftLabel='کل روز';
+      const statusClass=r.status==='approved'?'approved':r.status==='rejected'?'rejected':'pending';
+      const statusLabel=r.status==='approved'?'تأیید شده':r.status==='rejected'?'رد شده':'در انتظار';
+      h+=`<div class="req-item"><span class="req-type">${typeLabel}</span><span class="req-date">📆 ${formatDate(r.details?.date||'')}</span>${shiftLabel?`<span>🕐 ${shiftLabel}</span>`:''}<span class="req-status ${statusClass}">${statusLabel}</span></div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+  el.innerHTML=h;
+}
+function closeProfile(){profileStaffId=null;activeTab='staff';renderAll();}
+window.closeProfile=closeProfile;
+function changeProfileMonth(delta){
+  let newMonth=profileJm+delta,newYear=profileJy;
+  if(newMonth>12){newMonth=1;newYear++;}
+  if(newMonth<1){newMonth=12;newYear--;}
+  profileJy=newYear;profileJm=newMonth;
+  renderProfile();
+}
+window.changeProfileMonth=changeProfileMonth;
+function editRulesFromProfile(staffId){activeTab='rules';renderAll();setTimeout(()=>{const row=document.querySelector(`tr[data-staff="${staffId}"]`);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.style.background='#fff3cd';setTimeout(()=>{row.style.background='';},3000);}},500);}
+window.editRulesFromProfile=editRulesFromProfile;
+
+function renderSettings(){
+  const el=document.getElementById('view-settings');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  const d=activeDept,days=jalaliMonthLength(jy,jm);
+  let h='';
+  h+='<div class="card"><h3>⚙️ تنظیمات کلی</h3>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">';
+  h+='<label>حداکثر روز متوالی کاری:</label>';
+  h+='<input type="number" id="max-consec" value="'+(data.settings?.maxConsecutive||6)+'" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">';
+  h+='<button class="btn btn-primary btn-sm" id="save-settings">ذخیره</button>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+  h+='<label>⛔ ممنوعیت شب به صبح:</label>';
+  h+='<input type="checkbox" id="night-rest" '+(data.settings?.enforceNightRest!==false?'checked':'')+'>';
+  h+='<span style="color:#888;font-size:12px;">فعال</span>';
+  h+='</div></div>';
+  h+='<div class="card"><h3>📊 تعداد نفرات مورد نیاز روزانه</h3>';
+  h+='<div style="font-size:11px;color:#888;margin-bottom:6px;">تعداد پرسنل مورد نیاز برای هر روز و هر شیفت (قابل تغییر)</div>';
+  h+='<div style="overflow:auto;max-height:450px;">';
+  h+='<table class="daily-req-table"><tr><th>روز</th><th colspan="4">صبح</th><th colspan="4">عصر</th><th colspan="4">شب</th></tr>';
+  h+='<tr><th></th><th>🩺</th><th>🧹</th><th>🤝</th><th>💊</th><th>🩺</th><th>🧹</th><th>🤝</th><th>💊</th><th>🩺</th><th>🧹</th><th>🤝</th><th>💊</th></tr>';
+  for(let day=1;day<=days;day++){
+    const dateKey=jy+'-'+pad2(jm)+'-'+pad2(day);
+    const wd=weekdayOfJalali(jy,jm,day);
+    h+='<tr><td>'+faDigits(day)+' ('+WEEKDAYS[wd]+')</td>';
+    ['morning','evening','night'].forEach(shift=>{
+      const req=getDailyReq(d,dateKey,shift);
+      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="nurse" value="'+(req.nurse||4)+'"></td>';
+      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="service" value="'+(req.service||1)+'"></td>';
+      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="helper" value="'+(req.helper||1)+'"></td>';
+      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="behyar" value="'+(req.behyar||1)+'"></td>';
+    });
+    h+='</tr>';
+  }
+  h+='</table></div>';
+  h+='<div style="font-size:10px;color:#888;margin-top:6px;">🩺 پرستار | 🧹 خدمات | 🤝 کمکی | 💊 بهیار</div>';
+  h+='</div>';
+  el.innerHTML=h;
+  document.getElementById('save-settings')?.addEventListener('click',function(){
+    if(!data.settings)data.settings={};
+    data.settings.maxConsecutive=parseInt(document.getElementById('max-consec').value)||6;
+    data.settings.enforceNightRest=document.getElementById('night-rest').checked;
+    saveData(data);
+    toast('تنظیمات ذخیره شد');
+  });
+}
+
+function renderAll(){
+  renderDeptRow();
+  document.getElementById('view-schedule').classList.toggle('hidden',activeTab!=='schedule');
+  document.getElementById('view-staff').classList.toggle('hidden',activeTab!=='staff');
+  document.getElementById('view-requests').classList.toggle('hidden',activeTab!=='requests');
+  document.getElementById('view-notifications').classList.toggle('hidden',activeTab!=='notifications');
+  document.getElementById('view-report').classList.toggle('hidden',activeTab!=='report');
+  document.getElementById('view-rules').classList.toggle('hidden',activeTab!=='rules');
+  document.getElementById('view-profile').classList.toggle('hidden',activeTab!=='profile');
+  document.getElementById('view-settings').classList.toggle('hidden',activeTab!=='settings');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===activeTab));
+  if(activeTab==='schedule')renderSchedule();
+  else if(activeTab==='staff')renderStaff();
+  else if(activeTab==='requests')renderRequests();
+  else if(activeTab==='notifications')renderNotifications();
+  else if(activeTab==='report')renderReport();
+  else if(activeTab==='rules')renderRules();
+  else if(activeTab==='profile')renderProfile();
+  else if(activeTab==='settings')renderSettings();
+  updateNotifications();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  if(!data){toast('لطفاً ابتدا ادمین را اجرا کنید');return;}
+  document.getElementById('login-btn').addEventListener('click',function(){
+    const hospital=document.getElementById('sup-hospital').value.trim();
+    const dept=document.getElementById('sup-dept').value.trim();
+    const name=document.getElementById('sup-name').value.trim();
+    const code=document.getElementById('sup-code').value.trim();
+    const pass=document.getElementById('sup-password').value.trim();
+    const sup=data.supervisors.find(s=>s.hospitalName===hospital&&s.department===dept&&s.fullName===name&&s.employeeCode===code&&s.password===pass);
+    if(sup){
+      isAdmin=true;currentUser={id:sup.id};currentSup=sup;
+      document.getElementById('status-badge').innerHTML='<span class="badge-supervisor">✅ سرپرستار</span>';
+      document.getElementById('status-badge2').innerHTML='<span class="badge-supervisor">✅ سرپرستار</span>';
+      document.getElementById('status-bar').style.display='block';
+      document.getElementById('status-bar').innerHTML='✅ شما به عنوان سرپرستار وارد شدید. همه تغییرات ذخیره میشود.';
+      document.getElementById('login-error').style.display='none';
+      document.getElementById('page-login').classList.add('hidden');
+      document.getElementById('page-supervisor').classList.remove('hidden');
+      document.getElementById('sup-info').style.display='block';
+      document.getElementById('sup-info').innerHTML='👤 <strong>'+sup.fullName+'</strong> | 🆔 '+sup.employeeCode+' | 🏥 '+sup.hospitalName+' | 📋 '+sup.department;
+      document.querySelectorAll('.tab').forEach(t=>t.disabled=false);
+      document.querySelectorAll('.tab').forEach(tab=>{
+        tab.addEventListener('click',function(){
+          if(this.disabled)return;
+          document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+          this.classList.add('active');
+          activeTab=this.dataset.tab;
+          renderAll();
+        });
+      });
+      renderAll();
+      toast('ورود سرپرستار');
+    }else{
+      document.getElementById('login-error').style.display='block';
+      setTimeout(()=>document.getElementById('login-error').style.display='none',3000);
+    }
+  });
+  document.getElementById('logout-btn').addEventListener('click',function(){
+    isAdmin=false;currentUser=null;currentSup=null;
+    document.getElementById('status-badge').innerHTML='';
+    document.getElementById('status-badge2').innerHTML='';
+    document.getElementById('status-bar').style.display='none';
+    document.getElementById('sup-info').style.display='none';
+    document.getElementById('page-supervisor').classList.add('hidden');
+    document.getElementById('page-login').classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(t=>{t.disabled=t.dataset.tab!=='schedule';});
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector('[data-tab="schedule"]').classList.add('active');
+    activeTab='schedule';
+    toast('خروج');
+  });
+  document.addEventListener('click',function(e){
+    if(!isAdmin)return;
+    if(e.target.closest('[data-dept]')&&!e.target.closest('#add-dept-btn')){
+      const id=e.target.closest('[data-dept]').dataset.dept;
+      activeDept=id;activeSetupDept=id;renderAll();return;
+    }
+    if(e.target.id==='add-staff-btn'){
+      const name=document.getElementById('new-staff-name').value.trim();
+      const code=document.getElementById('new-staff-code').value.trim();
+      const pass=document.getElementById('new-staff-password').value.trim();
+      const role=document.getElementById('new-staff-role').value;
+      if(!name||!code||!pass){toast('همه فیلدها را پر کنید');return;}
+      const sup=data.supervisors.find(s=>s.id===currentUser.id);
+      const newStaff={id:uid(),hospitalId:sup.hospitalId,hospitalName:sup.hospitalName,department:sup.department,fullName:name,employeeCode:code,password:pass,role:role,supervisorId:sup.id,status:'approved',vacations:[],customShifts:[],notComeRequests:[],rules:{},departmentId:activeDept};
+      data.staff.push(newStaff);
+      data.nurses.push({id:newStaff.id,name:name,departmentId:activeDept,role:role,grade:3,supervisorId:sup.id,vacations:[],customShifts:[],notComeRequests:[],rules:{}});
+      saveData(data);
+      document.getElementById('new-staff-name').value='';
+      document.getElementById('new-staff-code').value='';
+      document.getElementById('new-staff-password').value='';
+      renderStaff();
+      toast('پرسنل با موفقیت اضافه شد');
+      return;
+    }
+    if(e.target.id==='prev-month'){
+      const today=getTodayJalali();
+      let newJm=jm-1,newJy=jy;
+      if(newJm<1){newJm=12;newJy--;}
+      if(!isAdmin&&(newJy<today.jy||(newJy===today.jy&&newJm<today.jm))){toast('نمیتوانید به قبل از ماه جاری بروید');return;}
+      if(!isAdmin&&(newJy>today.jy||(newJy===today.jy&&newJm>today.jm))){toast('نمیتوانید به بعد از ماه جاری بروید');return;}
+      jy=newJy;jm=newJm;renderSchedule();return;
+    }
+    if(e.target.id==='next-month'){
+      const today=getTodayJalali();
+      let newJm=jm+1,newJy=jy;
+      if(newJm>12){newJm=1;newJy++;}
+      if(!isAdmin&&(newJy>today.jy||(newJy===today.jy&&newJm>today.jm))){toast('نمیتوانید به بعد از ماه جاری بروید');return;}
+      if(!isAdmin&&(newJy<today.jy||(newJy===today.jy&&newJm<today.jm))){toast('نمیتوانید به قبل از ماه جاری بروید');return;}
+      jy=newJy;jm=newJm;renderSchedule();return;
+    }
+    if(e.target.id==='gen-btn'){generateSchedule(activeDept,jy,jm);renderSchedule();return;}
+    if(e.target.id==='clear-btn'){clearSchedule(activeDept,jy,jm);renderSchedule();return;}
+    if(e.target.id==='swap-btn'){swapMode=!swapMode;swapSelection=null;renderSchedule();return;}
+    if(e.target.closest('[data-action="remove"]')){
+      const btn=e.target.closest('[data-action="remove"]');
+      const sched=getSchedule(activeDept,jy,jm);
+      if(sched[btn.dataset.date]&&sched[btn.dataset.date][btn.dataset.shift]){
+        sched[btn.dataset.date][btn.dataset.shift].nurses=sched[btn.dataset.date][btn.dataset.shift].nurses.filter(id=>id!==btn.dataset.nurse);
+        if(sched[btn.dataset.date][btn.dataset.shift].headNurse===btn.dataset.nurse){
+          sched[btn.dataset.date][btn.dataset.shift].headNurse=sched[btn.dataset.date][btn.dataset.shift].nurses[0]||null;
+        }
+        saveData(data);
+        renderSchedule();
+      }
+      return;
+    }
+    const chip=e.target.closest('.chip');
+    if(chip&&swapMode&&!e.target.closest('[data-action="remove"]')){
+      const sel={date:chip.dataset.date,shift:chip.dataset.shift,nurse:chip.dataset.nurse};
+      if(!swapSelection){swapSelection=sel;renderSchedule();return;}
+      if(swapSelection.date===sel.date&&swapSelection.shift===sel.shift&&swapSelection.nurse===sel.nurse){swapSelection=null;renderSchedule();return;}
+      const sched=getSchedule(activeDept,jy,jm);
+      const a=swapSelection,b=sel;
+      if(sched[a.date]&&sched[a.date][a.shift]){
+        sched[a.date][a.shift].nurses=sched[a.date][a.shift].nurses.filter(id=>id!==a.nurse);
+        if(sched[a.date][a.shift].headNurse===a.nurse)sched[a.date][a.shift].headNurse=sched[a.date][a.shift].nurses[0]||null;
+      }
+      if(sched[b.date]&&sched[b.date][b.shift]){
+        sched[b.date][b.shift].nurses=sched[b.date][b.shift].nurses.filter(id=>id!==b.nurse);
+        if(sched[b.date][b.shift].headNurse===b.nurse)sched[b.date][b.shift].headNurse=sched[b.date][b.shift].nurses[0]||null;
+      }
+      if(sched[a.date]&&sched[a.date][a.shift]){
+        sched[a.date][a.shift].nurses.push(b.nurse);
+        if(!sched[a.date][a.shift].headNurse)sched[a.date][a.shift].headNurse=b.nurse;
+      }
+      if(sched[b.date]&&sched[b.date][b.shift]){
+        sched[b.date][b.shift].nurses.push(a.nurse);
+        if(!sched[b.date][b.shift].headNurse)sched[b.date][b.shift].headNurse=a.nurse;
+      }
+      saveData(data);
+      swapSelection=null;
+      toast('جابجایی انجام شد');
+      renderSchedule();
+    }
+  });
+  document.addEventListener('change',function(e){
+    if(!isAdmin)return;
+    if(e.target.dataset&&e.target.dataset.role==='add-nurse'){
+      const nid=e.target.value;
+      if(!nid)return;
+      const sched=getSchedule(activeDept,jy,jm);
+      const date=e.target.dataset.date,shift=e.target.dataset.shift;
+      if(!sched[date])sched[date]={};
+      if(!sched[date][shift])sched[date][shift]={nurses:[],headNurse:null};
+      if(sched[date][shift].nurses.indexOf(nid)===-1){
+        sched[date][shift].nurses.push(nid);
+        if(!sched[date][shift].headNurse)sched[date][shift].headNurse=nid;
+        saveData(data);
+        renderSchedule();
+      }
+      e.target.value='';
+      return;
+    }
+    if(e.target.classList.contains('daily-req-input')){
+      const dept=e.target.dataset.dept;
+      const date=e.target.dataset.date;
+      const shift=e.target.dataset.shift;
+      const type=e.target.dataset.type;
+      const val=parseInt(e.target.value)||0;
+      if(!data.dailyRequirements)data.dailyRequirements={};
+      if(!data.dailyRequirements[dept])data.dailyRequirements[dept]={};
+      if(!data.dailyRequirements[dept][date])data.dailyRequirements[dept][date]={};
+      if(!data.dailyRequirements[dept][date][shift])data.dailyRequirements[dept][date][shift]={nurse:4,service:1,helper:1,behyar:1};
+      data.dailyRequirements[dept][date][shift][type]=val;
+      saveData(data);
+      return;
+    }
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.closest('[data-dept]')&&!e.target.closest('#add-dept-btn')){
+      const id=e.target.closest('[data-dept]').dataset.dept;
+      activeDept=id;activeSetupDept=id;
+      renderAll();
+      return;
+    }
+  });
+  const today=getTodayJalali();
+  jy=today.jy;jm=today.jm;
+  reportJy=today.jy;reportJm=today.jm;
+  profileJy=today.jy;profileJm=today.jm;
+  renderAll();
+  toast('👁 بخش ICU - تاریخ: '+faDigits(today.jd)+' '+JMONTHS[today.jm-1]+' '+faDigits(today.jy));
+});
+</script>
+</body>
+</html>
