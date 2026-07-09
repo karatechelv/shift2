@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>چرخهٔ شیفت - ادمین</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:tahoma,sans-serif;background:#f0f2f5;padding:12px;}
+.container{max-width:1000px;margin:0 auto;background:#fff;border-radius:12px;padding:16px;}
+h1{font-size:22px;color:#1a3c5e;}
+.sub{color:#888;font-size:13px;margin-bottom:16px;}
+
+.login-box{background:#f8f9fa;padding:14px 18px;border-radius:8px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.login-box input{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
+.btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+.btn-primary{background:#1a3c5e;color:#fff;}
+.btn-primary:hover{background:#0f2a40;}
+.btn-secondary{background:#e9ecef;color:#333;}
+.btn-secondary:hover{background:#dde1e5;}
+.btn-danger{background:#dc3545;color:#fff;}
+.btn-danger:hover{background:#c82333;}
+.btn-success{background:#28a745;color:#fff;}
+.btn-success:hover{background:#218838;}
+.btn-edit{background:#17a2b8;color:#fff;}
+.btn-edit:hover{background:#138496;}
+.btn-sm{padding:3px 8px;font-size:11px;}
+.badge-admin{background:#1a3c5e;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;}
+.hidden{display:none !important;}
+
+.card{background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid #e9ecef;}
+.card h3{font-size:15px;margin-bottom:8px;color:#1a3c5e;}
+
+.hospital-card{background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:12px;margin-bottom:10px;}
+.hospital-card .h-name{font-weight:bold;font-size:15px;color:#1a3c5e;}
+.hospital-card .dept-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.hospital-card .dept-list .dept-tag{background:#e9ecef;padding:2px 10px;border-radius:12px;font-size:12px;display:flex;align-items:center;gap:4px;}
+.hospital-card .dept-list .dept-tag .del{color:#dc3545;cursor:pointer;font-weight:bold;}
+
+.admin-table{width:100%;border-collapse:collapse;font-size:13px;}
+.admin-table th,.admin-table td{padding:6px 8px;border:1px solid #dee2e6;text-align:center;vertical-align:middle;}
+.admin-table th{background:#e9ecef;}
+.admin-table .edit-input{padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;width:100%;}
+
+.form-inline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.form-inline input,.form-inline select{padding:5px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;}
+
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:25px;font-size:13px;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:999;}
+#toast.show{opacity:1;}
+
+.footer{text-align:center;font-size:11px;color:#aaa;padding:12px 0 4px;border-top:1px solid #eee;margin-top:20px;}
+.footer a{color:#1a3c5e;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ===== صفحه ورود ===== -->
+<div id="page-login">
+<h1>🔄 چرخهٔ شیفت</h1>
+<div class="sub">پنل مدیریت - ادمین</div>
+
+<div class="login-box">
+  <span style="font-weight:bold;">🔐 ورود ادمین:</span>
+  <input type="text" id="admin-username" placeholder="نام کاربری" value="karatechelv" style="width:150px;">
+  <input type="password" id="admin-password" placeholder="رمز عبور" value="2808M@h67" style="width:150px;">
+  <button class="btn btn-primary" id="login-btn">ورود</button>
+  <span id="status-badge"></span>
+</div>
+<div id="login-error" style="color:#dc3545;font-size:13px;display:none;margin-bottom:10px;">نام کاربری یا رمز عبور اشتباه است</div>
+</div>
+
+<!-- ===== پنل ادمین ===== -->
+<div id="page-admin" class="hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+  <h1>🔄 چرخهٔ شیفت</h1>
+  <div><span class="badge-admin">✅ ادمین</span> <button class="btn btn-secondary btn-sm" id="logout-btn">خروج</button></div>
+</div>
+<div class="sub">پنل مدیریت بیمارستان‌ها، بخش‌ها و سرپرستاران</div>
+
+<div class="card">
+  <h3>🏥 مدیریت بیمارستان‌ها و بخش‌ها</h3>
+  <div class="form-inline" style="margin-bottom:10px;">
+    <input type="text" id="hospital-name" placeholder="نام بیمارستان" style="flex:1;min-width:120px;">
+    <input type="text" id="dept-name" placeholder="نام بخش (اختیاری)" style="flex:1;min-width:100px;">
+    <button class="btn btn-success" id="add-hospital-btn">+ افزودن بیمارستان</button>
+  </div>
+  <div id="hospital-list"></div>
+</div>
+
+<div class="card">
+  <h3>👨‍⚕️ مدیریت سرپرستاران</h3>
+  <div class="form-inline" style="margin-bottom:10px;">
+    <select id="sup-hospital-select" style="min-width:120px;"></select>
+    <select id="sup-dept-select" style="min-width:100px;"></select>
+    <input type="text" id="sup-name" placeholder="نام سرپرستار" style="flex:1;min-width:100px;">
+    <input type="text" id="sup-code" placeholder="شماره پرسنلی" style="width:120px;">
+    <input type="text" id="sup-pass" placeholder="رمز عبور" style="width:120px;">
+    <button class="btn btn-success" id="add-sup-btn">+ افزودن سرپرستار</button>
+  </div>
+  <div id="sup-list"></div>
+</div>
+
+</div>
+
+<div class="footer">
+  ساخته شده توسط <strong>محسن کرامتی لایق</strong> —
+  <a href="mailto:Karatechelv@gmail.com">Karatechelv@gmail.com</a>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ================================================================
+//  داده‌ها
+// ================================================================
+
+const STORAGE_KEY = 'nurse_system_data';
+const ADMIN_USER = "karatechelv";
+const ADMIN_PASS = "2808M@h67";
+
+let editingSupId = null;
+
+function getDefaultData() {
+  return {
+    hospitals: [
+      { id: 'h1', name: 'بیمارستان امام خمینی', departments: ['ICU', 'CCU', 'اورژانس'] },
+      { id: 'h2', name: 'بیمارستان رسول اکرم', departments: ['ICU', 'CCU', 'داخلی'] }
+    ],
+    supervisors: [
+      { id: 's1', hospitalId: 'h1', hospitalName: 'بیمارستان امام خمینی', department: 'ICU', fullName: 'دکتر احمدی', employeeCode: '12345', password: '123456' },
+      { id: 's2', hospitalId: 'h2', hospitalName: 'بیمارستان رسول اکرم', department: 'CCU', fullName: 'دکتر کریمی', employeeCode: '67890', password: '654321' }
+    ],
+    staff: [],
+    requests: [],
+    requestHistory: [],
+    departments: [{ id: 'icu', name: 'بخش ICU' }],
+    nurses: [],
+    schedules: {},
+    dailyRequirements: {},
+    settings: { maxConsecutive: 6, enforceNightRest: true }
+  };
+}
+
+function loadData() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) {
+      const p = JSON.parse(d);
+      if (p && p.hospitals) return p;
+    }
+  } catch (e) {}
+  const def = getDefaultData();
+  saveData(def);
+  return def;
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+let data = loadData();
+let isAdmin = false;
+
+// ================================================================
+//  ابزارها
+// ================================================================
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ================================================================
+//  رندر پنل ادمین
+// ================================================================
+
+function renderAdmin() {
+  // ===== بیمارستان‌ها =====
+  const hospList = document.getElementById('hospital-list');
+  let hHtml = '';
+  if (data.hospitals.length === 0) {
+    hHtml = '<div style="color:#888;font-size:13px;padding:8px;">هیچ بیمارستانی ثبت نشده</div>';
+  } else {
+    data.hospitals.forEach(h => {
+      hHtml += `<div class="hospital-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+          <span class="h-name">🏥 ${h.name}</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteHospital('${h.id}')">🗑 حذف</button>
+        </div>
+        <div class="dept-list">
+          ${h.departments.map(d => `<span class="dept-tag">${d} <span class="del" onclick="deleteDept('${h.id}','${d}')">×</span></span>`).join('')}
+          <span style="display:inline-flex;gap:3px;align-items:center;">
+            <input type="text" id="new-dept-${h.id}" placeholder="بخش جدید" style="width:100px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;">
+            <button class="btn btn-success btn-sm" onclick="addDept('${h.id}')">+</button>
+          </span>
+        </div>
+      </div>`;
+    });
+  }
+  hospList.innerHTML = hHtml;
+
+  // ===== آپدیت سلیکت بیمارستان =====
+  const supSelect = document.getElementById('sup-hospital-select');
+  supSelect.innerHTML = data.hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+
+  // ===== آپدیت سلیکت بخش =====
+  updateDeptSelect();
+
+  // ===== لیست سرپرستاران با قابلیت ویرایش و حذف =====
+  const supList = document.getElementById('sup-list');
+  let sHtml = '';
+  if (data.supervisors.length === 0) {
+    sHtml = '<div style="color:#888;font-size:13px;padding:8px;">هیچ سرپرستاری ثبت نشده</div>';
+  } else {
+    sHtml = `<table class="admin-table">
+      <tr>
+        <th>نام</th>
+        <th>شماره پرسنلی</th>
+        <th>بیمارستان</th>
+        <th>بخش</th>
+        <th>رمز عبور</th>
+        <th>عملیات</th>
+      </tr>`;
+    data.supervisors.forEach(s => {
+      const isEditing = editingSupId === s.id;
+      const hosp = data.hospitals.find(h => h.id === s.hospitalId);
+      const depts = hosp ? hosp.departments : [];
+
+      sHtml += `<tr id="sup-row-${s.id}">`;
+      if (isEditing) {
+        // حالت ویرایش
+        sHtml += `<td><input class="edit-input" id="edit-sup-name-${s.id}" value="${s.fullName}"></td>`;
+        sHtml += `<td><input class="edit-input" id="edit-sup-code-${s.id}" value="${s.employeeCode}"></td>`;
+        sHtml += `<td><select class="edit-input" id="edit-sup-hospital-${s.id}" onchange="updateEditDeptSelect('${s.id}')">
+          ${data.hospitals.map(h => `<option value="${h.id}" ${h.id===s.hospitalId?'selected':''}>${h.name}</option>`).join('')}
+        </select></td>`;
+        sHtml += `<td><select class="edit-input" id="edit-sup-dept-${s.id}">
+          ${depts.map(d => `<option value="${d}" ${d===s.department?'selected':''}>${d}</option>`).join('')}
+        </select></td>`;
+        sHtml += `<td><input class="edit-input" id="edit-sup-pass-${s.id}" value="${s.password}"></td>`;
+        sHtml += `<td>
+          <button class="btn btn-success btn-sm" onclick="saveSupEdit('${s.id}')">💾 ذخیره</button>
+          <button class="btn btn-secondary btn-sm" onclick="cancelSupEdit()">❌ انصراف</button>
+        </td>`;
+      } else {
+        // حالت عادی
+        sHtml += `<td>${s.fullName}</td>`;
+        sHtml += `<td>${s.employeeCode}</td>`;
+        sHtml += `<td>${hosp ? hosp.name : s.hospitalName}</td>`;
+        sHtml += `<td>${s.department || '---'}</td>`;
+        sHtml += `<td style="direction:ltr;font-family:monospace;">${s.password}</td>`;
+        sHtml += `<td>
+          <button class="btn btn-edit btn-sm" onclick="editSup('${s.id}')">✏️ ویرایش</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSupervisor('${s.id}')">🗑 حذف</button>
+        </td>`;
+      }
+      sHtml += `</tr>`;
+    });
+    sHtml += '</table>';
+  }
+  supList.innerHTML = sHtml;
+}
+
+function updateDeptSelect() {
+  const hospId = document.getElementById('sup-hospital-select').value;
+  const hosp = data.hospitals.find(h => h.id === hospId);
+  const deptSelect = document.getElementById('sup-dept-select');
+  if (hosp) {
+    deptSelect.innerHTML = hosp.departments.map(d => `<option value="${d}">${d}</option>`).join('');
+  } else {
+    deptSelect.innerHTML = '<option value="">---</option>';
+  }
+}
+
+function updateEditDeptSelect(supId) {
+  const hospId = document.getElementById(`edit-sup-hospital-${supId}`).value;
+  const hosp = data.hospitals.find(h => h.id === hospId);
+  const deptSelect = document.getElementById(`edit-sup-dept-${supId}`);
+  if (deptSelect && hosp) {
+    deptSelect.innerHTML = hosp.departments.map(d => `<option value="${d}">${d}</option>`).join('');
+  }
+}
+
+// ================================================================
+//  توابع ویرایش سرپرستار
+// ================================================================
+
+window.editSup = function(id) {
+  editingSupId = id;
+  renderAdmin();
+};
+
+window.cancelSupEdit = function() {
+  editingSupId = null;
+  renderAdmin();
+};
+
+window.saveSupEdit = function(id) {
+  const sup = data.supervisors.find(s => s.id === id);
+  if (!sup) { toast('❌ سرپرستار یافت نشد'); return; }
+
+  const newName = document.getElementById(`edit-sup-name-${id}`).value.trim();
+  const newCode = document.getElementById(`edit-sup-code-${id}`).value.trim();
+  const newHospitalId = document.getElementById(`edit-sup-hospital-${id}`).value;
+  const newDept = document.getElementById(`edit-sup-dept-${id}`).value;
+  const newPass = document.getElementById(`edit-sup-pass-${id}`).value.trim();
+
+  if (!newName || !newCode || !newPass) {
+    toast('❌ همه فیلدها را پر کنید');
+    return;
+  }
+
+  // بررسی تکراری نبودن شماره پرسنلی (به جز خودش)
+  const existingSup = data.supervisors.find(s => s.employeeCode === newCode && s.id !== id);
+  if (existingSup) {
+    toast('❌ این شماره پرسنلی قبلاً ثبت شده است');
+    return;
+  }
+
+  const hosp = data.hospitals.find(h => h.id === newHospitalId);
+  sup.fullName = newName;
+  sup.employeeCode = newCode;
+  sup.hospitalId = newHospitalId;
+  sup.hospitalName = hosp ? hosp.name : '';
+  sup.department = newDept;
+  sup.password = newPass;
+
+  saveData(data);
+  editingSupId = null;
+  renderAdmin();
+  toast('✅ اطلاعات سرپرستار با موفقیت بروز شد');
+};
+
+// ================================================================
+//  توابع مدیریت
+// ================================================================
+
+// ===== بیمارستان =====
+window.deleteHospital = function(id) {
+  if (!confirm('آیا از حذف این بیمارستان و تمام اطلاعات مرتبط مطمئن هستید؟')) return;
+  data.hospitals = data.hospitals.filter(h => h.id !== id);
+  data.supervisors = data.supervisors.filter(s => s.hospitalId !== id);
+  data.staff = data.staff.filter(s => s.hospitalId !== id);
+  saveData(data);
+  renderAdmin();
+  toast('🗑 بیمارستان حذف شد');
+};
+
+window.deleteDept = function(hid, name) {
+  if (!confirm(`آیا از حذف بخش ${name} مطمئن هستید؟`)) return;
+  const h = data.hospitals.find(h => h.id === hid);
+  if (h) {
+    h.departments = h.departments.filter(d => d !== name);
+    saveData(data);
+    renderAdmin();
+    toast(`🗑 بخش ${name} حذف شد`);
+  }
+};
+
+window.addDept = function(hid) {
+  const inp = document.getElementById(`new-dept-${hid}`);
+  const name = inp.value.trim();
+  if (!name) { toast('❌ نام بخش را وارد کنید'); return; }
+  const h = data.hospitals.find(h => h.id === hid);
+  if (h && !h.departments.includes(name)) {
+    h.departments.push(name);
+    saveData(data);
+    renderAdmin();
+    toast(`✅ بخش ${name} اضافه شد`);
+    inp.value = '';
+  } else {
+    toast('❌ بخش وجود دارد');
+  }
+};
+
+// ===== سرپرستار =====
+window.deleteSupervisor = function(id) {
+  if (!confirm('آیا از حذف این سرپرستار مطمئن هستید؟')) return;
+  data.supervisors = data.supervisors.filter(s => s.id !== id);
+  data.staff = data.staff.filter(s => s.supervisorId !== id);
+  saveData(data);
+  if (editingSupId === id) editingSupId = null;
+  renderAdmin();
+  toast('🗑 سرپرستار حذف شد');
+};
+
+// ================================================================
+//  رویدادها
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+
+  // ===== ورود =====
+  document.getElementById('login-btn').addEventListener('click', function() {
+    const user = document.getElementById('admin-username').value.trim();
+    const pass = document.getElementById('admin-password').value.trim();
+    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+      isAdmin = true;
+      document.getElementById('status-badge').innerHTML = '<span class="badge-admin">✅ وارد شدید</span>';
+      document.getElementById('page-login').classList.add('hidden');
+      document.getElementById('page-admin').classList.remove('hidden');
+      document.getElementById('login-error').style.display = 'none';
+      renderAdmin();
+      toast('✅ ورود موفق');
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      setTimeout(() => document.getElementById('login-error').style.display = 'none', 3000);
+    }
+  });
+
+  // ===== خروج =====
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    isAdmin = false;
+    document.getElementById('status-badge').innerHTML = '';
+    document.getElementById('page-admin').classList.add('hidden');
+    document.getElementById('page-login').classList.remove('hidden');
+    toast('🚪 خروج');
+  });
+
+  // ===== افزودن بیمارستان =====
+  document.getElementById('add-hospital-btn').addEventListener('click', function() {
+    const name = document.getElementById('hospital-name').value.trim();
+    const dept = document.getElementById('dept-name').value.trim();
+    if (!name) { toast('❌ نام بیمارستان را وارد کنید'); return; }
+    data.hospitals.push({
+      id: uid(),
+      name: name,
+      departments: dept ? [dept] : ['عمومی']
+    });
+    saveData(data);
+    document.getElementById('hospital-name').value = '';
+    document.getElementById('dept-name').value = '';
+    renderAdmin();
+    toast(`✅ بیمارستان ${name} اضافه شد`);
+  });
+
+  // ===== افزودن سرپرستار =====
+  document.getElementById('add-sup-btn').addEventListener('click', function() {
+    const hospitalId = document.getElementById('sup-hospital-select').value;
+    const dept = document.getElementById('sup-dept-select').value;
+    const name = document.getElementById('sup-name').value.trim();
+    const code = document.getElementById('sup-code').value.trim();
+    const pass = document.getElementById('sup-pass').value.trim();
+
+    // اعتبارسنجی
+    if (!name) { toast('❌ نام سرپرستار را وارد کنید'); return; }
+    if (!code) { toast('❌ شماره پرسنلی را وارد کنید'); return; }
+    if (!pass) { toast('❌ رمز عبور را وارد کنید'); return; }
+    
+    const hosp = data.hospitals.find(h => h.id === hospitalId);
+    if (!hosp) { toast('❌ بیمارستان را انتخاب کنید'); return; }
+
+    // بررسی تکراری نبودن شماره پرسنلی
+    const existingSup = data.supervisors.find(s => s.employeeCode === code);
+    if (existingSup) {
+      toast('❌ این شماره پرسنلی قبلاً ثبت شده است');
+      return;
+    }
+
+    // افزودن سرپرستار جدید
+    const newSupervisor = {
+      id: uid(),
+      hospitalId: hospitalId,
+      hospitalName: hosp.name,
+      department: dept || 'ICU',
+      fullName: name,
+      employeeCode: code,
+      password: pass
+    };
+    
+    data.supervisors.push(newSupervisor);
+    saveData(data);
+    
+    // پاک کردن فرم
+    document.getElementById('sup-name').value = '';
+    document.getElementById('sup-code').value = '';
+    document.getElementById('sup-pass').value = '';
+    
+    // رندر مجدد
+    renderAdmin();
+    toast(`✅ سرپرستار ${name} با موفقیت اضافه شد`);
+  });
+
+  // ===== آپدیت بخش‌ها با تغییر بیمارستان =====
+  document.getElementById('sup-hospital-select').addEventListener('change', updateDeptSelect);
+
+});
+</script>
+</body>
+</html>
