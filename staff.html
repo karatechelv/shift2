@@ -477,6 +477,11 @@ function renderNurseSchedule() {
   const days = jalaliMonthLength(y, m);
   const today = getTodayJalali();
   
+  // نگاشت شناسه پرسنل به نام، برای نمایش نام همه پرسنل هر شیفت
+  const deptStaff = data.staff.filter(s => s.departmentId === deptId);
+  const nameMap = {};
+  deptStaff.forEach(s => { nameMap[s.id] = s.fullName; });
+  
   // عنوان ماه
   document.getElementById('month-label').textContent = `${JMONTHS[m-1]} ${faDigits(y)}`;
   
@@ -491,13 +496,13 @@ function renderNurseSchedule() {
     const dayData = sched[dateKey] || {};
     const isToday = (y === today.jy && m === today.jm && day === today.jd);
     
-    h += `<div style="background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:4px;min-height:80px;">`;
+    h += `<div style="background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:4px;min-height:110px;">`;
     h += `<div style="font-size:11px;font-weight:bold;color:#333;display:flex;justify-content:space-between;margin-bottom:3px;">
       <span>${faDigits(day)}</span>
       ${isToday ? '<span style="background:#1a3c5e;color:#fff;border-radius:4px;padding:0 5px;font-size:9px;">امروز</span>' : ''}
     </div>`;
     
-    // بررسی مرخصی یا نیامدن کل روز
+    // بررسی مرخصی یا نیامدن کل روز (فقط برای خودم)
     const hasFullVacation = (currentNurse.vacations || []).some(v => {
       const parts = v.split(':');
       return parts[0] === dateKey && (parts.length === 1 || parts[1] === 'all');
@@ -507,51 +512,54 @@ function renderNurseSchedule() {
     );
     
     if (hasFullVacation) {
-      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;">مرخصی تمام روز</div>`;
+      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;margin-bottom:4px;">شما: مرخصی تمام روز</div>`;
     } else if (hasFullNotCome) {
-      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;">نیامدن تمام روز</div>`;
-    } else {
-      // نمایش شیفت‌ها
-      ['morning', 'evening', 'night'].forEach(sh => {
-        const d2 = dayData[sh] || { nurses: [] };
-        const assigned = d2.nurses || [];
-        const isAssigned = assigned.indexOf(currentNurse.id) !== -1;
-        const shLabel = sh === 'morning' ? 'صبح' : sh === 'evening' ? 'عصر' : 'شب';
-        
-        if (isAssigned) {
-          const isHead = d2.headNurse === currentNurse.id;
-          h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:${
-            sh === 'morning' ? '#fff3e0' : sh === 'evening' ? '#e3f2fd' : '#e8eaf6'
-          };">`;
-          h += `<span style="font-weight:bold;">${shLabel}</span>`;
-          if (isHead) h += ' <span style="background:#28a745;color:#fff;border-radius:2px;padding:0 4px;font-size:7px;">سرپرست</span>';
-          h += '</div>';
-        } else {
-          // بررسی مرخصی یا نیامدن برای این شیفت
-          const hasVacationShift = (currentNurse.vacations || []).some(v => {
-            const parts = v.split(':');
-            return parts[0] === dateKey && parts[1] === sh;
-          });
-          const hasNotComeShift = (currentNurse.notComeRequests || []).some(nc => 
-            nc.date === dateKey && nc.shift === sh
-          );
-          
-          if (hasVacationShift) {
-            h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:#ffcdd2;color:#c62828;">${shLabel} - مرخصی</div>`;
-          } else if (hasNotComeShift) {
-            h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:10px;background:#ffcdd2;color:#c62828;">${shLabel} - نیامدن</div>`;
-          }
-        }
-      });
+      h += `<div style="padding:4px;border-radius:2px;font-size:11px;background:#ffcdd2;color:#c62828;text-align:center;font-weight:bold;margin-bottom:4px;">شما: نیامدن تمام روز</div>`;
+    }
+    
+    // نمایش همه پرسنل هر شیفت
+    ['morning', 'evening', 'night'].forEach(sh => {
+      const d2 = dayData[sh] || { nurses: [] };
+      const assigned = d2.nurses || [];
+      const shLabel = sh === 'morning' ? 'صبح' : sh === 'evening' ? 'عصر' : 'شب';
+      const shColor = sh === 'morning' ? '#fff3e0' : sh === 'evening' ? '#e3f2fd' : '#e8eaf6';
       
-      // اگر هیچ شیفتی نیست
-      const totalShifts = ['morning', 'evening', 'night'].reduce((sum, sh) => {
-        const d2 = dayData[sh] || { nurses: [] };
-        return sum + ((d2.nurses || []).indexOf(currentNurse.id) !== -1 ? 1 : 0);
-      }, 0);
-      if (totalShifts === 0) {
-        h += `<div style="color:#ccc;font-size:9px;text-align:center;margin-top:4px;">--</div>`;
+      if (assigned.length > 0) {
+        h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:9px;background:${shColor};">`;
+        h += `<div style="font-weight:bold;margin-bottom:1px;">${shLabel}</div>`;
+        h += '<div style="display:flex;flex-wrap:wrap;gap:2px;">';
+        assigned.forEach(nid => {
+          const isMe = nid === currentNurse.id;
+          const isHead = d2.headNurse === nid;
+          const nm = nameMap[nid] || '؟';
+          h += `<span style="background:${isMe?'#1a3c5e':'#fff'};color:${isMe?'#fff':'#333'};border:1px solid ${isMe?'#1a3c5e':'#ddd'};border-radius:3px;padding:0 4px;font-size:8px;">${nm}${isHead?' 👑':''}</span>`;
+        });
+        h += '</div></div>';
       }
+      
+      // بررسی مرخصی یا نیامدن من برای این شیفت (اگر در لیست بالا نیستم)
+      if (assigned.indexOf(currentNurse.id) === -1) {
+        const hasVacationShift = (currentNurse.vacations || []).some(v => {
+          const parts = v.split(':');
+          return parts[0] === dateKey && parts[1] === sh;
+        });
+        const hasNotComeShift = (currentNurse.notComeRequests || []).some(nc => 
+          nc.date === dateKey && nc.shift === sh
+        );
+        if (hasVacationShift) {
+          h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:9px;background:#ffcdd2;color:#c62828;">${shLabel} (من) - مرخصی</div>`;
+        } else if (hasNotComeShift) {
+          h += `<div style="padding:2px 4px;border-radius:2px;margin-bottom:2px;font-size:9px;background:#ffcdd2;color:#c62828;">${shLabel} (من) - نیامدن</div>`;
+        }
+      }
+    });
+    
+    const totalShifts = ['morning', 'evening', 'night'].reduce((sum, sh) => {
+      const d2 = dayData[sh] || { nurses: [] };
+      return sum + ((d2.nurses || []).length);
+    }, 0);
+    if (totalShifts === 0 && !hasFullVacation && !hasFullNotCome) {
+      h += `<div style="color:#ccc;font-size:9px;text-align:center;margin-top:4px;">--</div>`;
     }
     
     h += '</div>';
