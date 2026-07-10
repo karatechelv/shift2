@@ -237,6 +237,17 @@ function toast(msg) {
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function toLatinDigits(str){
+  if(str===undefined||str===null)return str;
+  const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩';
+  return String(str).replace(/[۰-۹٠-٩]/g,d=>{
+    const i=fa.indexOf(d);
+    if(i>-1)return String(i);
+    const j=ar.indexOf(d);
+    if(j>-1)return String(j);
+    return d;
+  });
+}
 function pad2(n) { return String(n).padStart(2, '0'); }
 
 // ================================================================
@@ -612,24 +623,26 @@ function renderNurseStats() {
 // ================================================================
 
 function findNurseByCodeAndPass(code, pass) {
+  code = toLatinDigits(code);
+  pass = toLatinDigits(pass);
   // 1. جستجو در supervisors (سرپرستاران)
   let found = data.supervisors.find(s => 
-    (s.employeeCode === code || s.code === code) && 
-    (s.password === pass || s.pass === pass)
+    (toLatinDigits(s.employeeCode) === code || toLatinDigits(s.code) === code) && 
+    (toLatinDigits(s.password) === pass || toLatinDigits(s.pass) === pass)
   );
   if (found) return { ...found, source: 'supervisor' };
   
   // 2. جستجو در nurses (پرسنل)
   found = data.nurses.find(n => 
-    (n.employeeCode === code || n.code === code) && 
-    (n.password === pass || n.pass === pass)
+    (toLatinDigits(n.employeeCode) === code || toLatinDigits(n.code) === code) && 
+    (toLatinDigits(n.password) === pass || toLatinDigits(n.pass) === pass)
   );
   if (found) return { ...found, source: 'nurse' };
   
   // 3. جستجو در staff (کارکنان)
   found = data.staff.find(s => 
-    (s.employeeCode === code || s.code === code) && 
-    (s.password === pass || s.pass === pass)
+    (toLatinDigits(s.employeeCode) === code || toLatinDigits(s.code) === code) && 
+    (toLatinDigits(s.password) === pass || toLatinDigits(s.pass) === pass)
   );
   if (found) return { ...found, source: 'staff' };
   
