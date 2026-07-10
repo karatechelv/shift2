@@ -171,6 +171,17 @@ let isAdmin = false;
 // ================================================================
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function toLatinDigits(str){
+  if(str===undefined||str===null)return str;
+  const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩';
+  return String(str).replace(/[۰-۹٠-٩]/g,d=>{
+    const i=fa.indexOf(d);
+    if(i>-1)return String(i);
+    const j=ar.indexOf(d);
+    if(j>-1)return String(j);
+    return d;
+  });
+}
 
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -402,9 +413,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== ورود =====
   document.getElementById('login-btn').addEventListener('click', function() {
-    const user = document.getElementById('admin-username').value.trim();
-    const pass = document.getElementById('admin-password').value.trim();
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    const user = toLatinDigits(document.getElementById('admin-username').value.trim());
+    const pass = toLatinDigits(document.getElementById('admin-password').value.trim());
+    if (user === toLatinDigits(ADMIN_USER) && pass === toLatinDigits(ADMIN_PASS)) {
       isAdmin = true;
       document.getElementById('status-badge').innerHTML = '<span class="badge-admin">✅ وارد شدید</span>';
       document.getElementById('page-login').classList.add('hidden');
@@ -449,8 +460,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const hospitalId = document.getElementById('sup-hospital-select').value;
     const dept = document.getElementById('sup-dept-select').value;
     const name = document.getElementById('sup-name').value.trim();
-    const code = document.getElementById('sup-code').value.trim();
-    const pass = document.getElementById('sup-pass').value.trim();
+    const code = toLatinDigits(document.getElementById('sup-code').value.trim());
+    const pass = toLatinDigits(document.getElementById('sup-pass').value.trim());
 
     // اعتبارسنجی
     if (!name) { toast('❌ نام سرپرستار را وارد کنید'); return; }
