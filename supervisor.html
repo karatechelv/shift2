@@ -731,7 +731,7 @@ function renderNotifications(){
             dayNotifs.slice().reverse().forEach(n=>{
               const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
               const statusLabel=n.status==='approved'||n.status==='active'?'✅ تأیید شد':n.status==='rejected'?'❌ رد شد':'ℹ️ اطلاع';
-              const statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
+              let statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
               if(n.type==='rule')statusClass='rule';
               let shiftLabel='';
               if(n.shift==='morning')shiftLabel='☀️ صبح';
@@ -763,6 +763,7 @@ function renderNotifications(){
 function renderReport(){
   const el=document.getElementById('view-report');
   if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  try{
   const y=reportJy||jy,m=reportJm||jm;
   const daysInMonth=jalaliMonthLength(y,m);
   const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
@@ -794,7 +795,7 @@ function renderReport(){
     else{
       events.forEach(n=>{
         const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
-        const statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
+        let statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
         if(n.type==='rule')statusClass='rule';
         const statusLabel=(n.status==='approved'||n.status==='active')?'✅':n.status==='rejected'?'❌':'ℹ️';
         let shiftLabel='';
@@ -815,6 +816,10 @@ function renderReport(){
   if(!hasAny){h+=`<div style="color:#888;font-size:13px;padding:8px;text-align:center;">هیچ اعلانی برای این ماه وجود ندارد</div>`;}
   h+=`</div>`;
   el.innerHTML=h;
+  }catch(err){
+    console.error('renderReport error:',err);
+    el.innerHTML='<div class="card">⚠️ خطا در بارگذاری گزارش. جزئیات خطا در کنسول مرورگر (F12) موجود است: '+err.message+'</div>';
+  }
 }
 function changeReportMonth(delta){
   let newMonth=reportJm+delta,newYear=reportJy;
