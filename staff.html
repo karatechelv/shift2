@@ -129,13 +129,17 @@ h1{font-size:22px;color:#1a3c5e;}
       <label>نوع درخواست:</label>
       <select id="request-type">
         <option value="vacation">مرخصی</option>
-        <option value="notcome">نیامدن</option>
-        <option value="shift-change">تغییر شیفت</option>
+        <option value="not_come">نیامدن</option>
+        <option value="custom_shift">تغییر شیفت</option>
       </select>
     </div>
     <div class="row">
       <label>تاریخ:</label>
-      <input type="text" id="request-date" placeholder="مثال: 1404-07-15">
+      <div style="display:flex;gap:4px;">
+        <select id="request-year"></select>
+        <select id="request-month"></select>
+        <select id="request-day"></select>
+      </div>
     </div>
     <div class="row" id="shift-select-row">
       <label>شیفت:</label>
@@ -188,6 +192,7 @@ let data = {
   staff: [],
   nurses: [],
   requests: [],
+  staffRequests: [],
   requestHistory: [],
   schedules: {},
   dailyRequirements: {},
@@ -205,6 +210,7 @@ function loadData() {
       if (p && p.hospitals) {
         data = p;
         if (!data.requests) data.requests = [];
+        if (!data.staffRequests) data.staffRequests = [];
         if (!data.requestHistory) data.requestHistory = [];
         if (!data.schedules) data.schedules = {};
         if (!data.nurses) data.nurses = [];
@@ -345,6 +351,7 @@ function faDigits(n) {
   const map = { '0': '۰', '1': '۱', '2': '۲', '3': '۳', '4': '۴', '5': '۵', '6': '۶', '7': '۷', '8': '۸', '9': '۹' };
   return String(n).replace(/[0-9]/g, d => map[d]);
 }
+function formatDate(ds){if(!ds)return '';const p=ds.split('-');if(p.length!==3)return ds;return faDigits(p[0])+'/'+faDigits(p[1])+'/'+faDigits(p[2]);}
 
 function getRoleLabel(r) {
   const map = { head_nurse: 'سرپرستار', senior: 'پرستار ارشد', nurse: 'پرستار', assistant: 'کمکی', worker: 'کارگر', behyar: 'بهیار', service: 'خدمات' };
@@ -359,9 +366,13 @@ function getSchedule(d, y, m) {
   return data.schedules[k];
 }
 
-function getNurseRequests(nurseId) {
+function getNurseRequests(staffId) {
   if (!data.requests) data.requests = [];
-  return data.requests.filter(r => r.nurseId === nurseId);
+  if (!data.staffRequests) data.staffRequests = [];
+  const fromSupervisor = data.requests.filter(r => r.staffId === staffId);
+  const fromSelf = data.staffRequests.filter(r => r.staffId === staffId);
+  const historyItems = (data.requestHistory || []).filter(r => r.staffId === staffId);
+  return [...fromSupervisor, ...fromSelf, ...historyItems].sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0));
 }
 
 function getShiftCounts(nurseId, deptId, y, m) {
@@ -404,6 +415,9 @@ function renderNursePanel() {
   
   document.getElementById('nurse-name-badge').textContent = `👩‍⚕️ ${nurse.fullName || nurse.name}`;
   
+  // پر کردن منوهای کشویی تاریخ درخواست
+  populateRequestDateSelects();
+  
   // برنامه شیفت
   renderNurseSchedule();
   
@@ -414,9 +428,38 @@ function renderNursePanel() {
   renderNurseStats();
 }
 
+function populateRequestDateSelects() {
+  const today = getTodayJalali();
+  const yearSel = document.getElementById('request-year');
+  const monthSel = document.getElementById('request-month');
+  const daySel = document.getElementById('request-day');
+  if (!yearSel || !monthSel || !daySel) return;
+  yearSel.innerHTML = '';
+  for (let y = today.jy - 1; y <= today.jy + 1; y++) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = faDigits(y);
+    if (y === today.jy) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  monthSel.innerHTML = '';
+  JMONTHS.forEach((mName, i) => {
+    const opt = document.createElement('option');
+    opt.value = i + 1; opt.textContent = mName;
+    if (i + 1 === today.jm) opt.selected = true;
+    monthSel.appendChild(opt);
+  });
+  daySel.innerHTML = '';
+  for (let d = 1; d <= 31; d++) {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = faDigits(d);
+    if (d === today.jd) opt.selected = true;
+    daySel.appendChild(opt);
+  }
+}
+
 function renderNurseSchedule() {
   const el = document.getElementById('nurse-schedule');
-  const deptId = currentNurse.hospitalId;
+  const deptId = currentNurse.departmentId;
   const y = jy, m = jm;
   const sched = getSchedule(deptId, y, m);
   const days = jalaliMonthLength(y, m);
@@ -519,15 +562,16 @@ function renderNurseRequests() {
   requests.slice().reverse().forEach(r => {
     const statusClass = r.status === 'approved' ? 'approved' : r.status === 'rejected' ? 'rejected' : 'pending';
     const statusLabel = r.status === 'approved' ? '✅ تایید شده' : r.status === 'rejected' ? '❌ رد شده' : '⏳ در انتظار';
-    const typeLabel = r.type === 'vacation' ? 'مرخصی' : r.type === 'notcome' ? 'نیامدن' : 'تغییر شیفت';
-    const shiftLabel = r.shift === 'all' ? 'کل روز' : r.shift === 'morning' ? 'صبح' : r.shift === 'evening' ? 'عصر' : 'شب';
+    const typeLabel = r.type === 'vacation' ? 'مرخصی' : r.type === 'not_come' ? 'نیامدن' : 'تغییر شیفت';
+    const details = r.details || {};
+    const shiftLabel = details.shift === 'all' ? 'کل روز' : details.shift === 'morning' ? 'صبح' : details.shift === 'evening' ? 'عصر' : 'شب';
     
     h += `<tr>
       <td>${typeLabel}</td>
-      <td>${r.date}</td>
+      <td>${formatDate ? formatDate(details.date || '') : (details.date || '')}</td>
       <td>${shiftLabel}</td>
       <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-      <td>${r.desc || '---'}</td>
+      <td>${r.message || '---'}</td>
     </tr>`;
   });
   h += '</table>';
@@ -536,7 +580,7 @@ function renderNurseRequests() {
 
 function renderNurseStats() {
   const el = document.getElementById('nurse-stats');
-  const counts = getShiftCounts(currentNurse.id, currentNurse.hospitalId, jy, jm);
+  const counts = getShiftCounts(currentNurse.id, currentNurse.departmentId, jy, jm);
   
   const totalDays = jalaliMonthLength(jy, jm);
   const vacCount = (currentNurse.vacations || []).filter(v => {
@@ -691,43 +735,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!currentNurse) return;
     
     const type = document.getElementById('request-type').value;
-    const date = document.getElementById('request-date').value.trim();
+    const year = document.getElementById('request-year').value;
+    const month = document.getElementById('request-month').value;
+    const day = document.getElementById('request-day').value;
     const shift = document.getElementById('request-shift').value;
     const desc = document.getElementById('request-desc').value.trim();
+    const date = year + '-' + pad2(month) + '-' + pad2(day);
     
-    if (!date) {
-      toast('❌ تاریخ را وارد کنید');
-      return;
-    }
-    
-    // بررسی فرمت تاریخ
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      toast('❌ فرمت تاریخ صحیح نیست (مثال: 1404-07-15)');
-      return;
-    }
-    
-    // ثبت درخواست
-    if (!data.requests) data.requests = [];
-    data.requests.push({
+    // ثبت درخواست (در آرایهٔ staffRequests تا سرپرستار ببیندش)
+    if (!data.staffRequests) data.staffRequests = [];
+    const exist = data.staffRequests.find(r => r.staffId === currentNurse.id && r.details && r.details.date === date && r.details.shift === shift && r.status === 'pending');
+    if (exist) { toast('این درخواست قبلاً ثبت شده'); return; }
+    data.staffRequests.push({
       id: uid(),
-      nurseId: currentNurse.id,
-      nurseName: currentNurse.fullName || currentNurse.name,
+      staffId: currentNurse.id,
+      staffName: currentNurse.fullName || currentNurse.name,
       type: type,
-      date: date,
-      shift: shift,
-      desc: desc,
+      details: { date: date, shift: shift },
       status: 'pending',
+      message: desc,
       createdAt: new Date().toISOString()
     });
     
     saveData();
     
     // پاک کردن فرم
-    document.getElementById('request-date').value = '';
     document.getElementById('request-desc').value = '';
     
     renderNurseRequests();
-    toast('✅ درخواست شما با موفقیت ثبت شد');
+    toast('✅ درخواست شما با موفقیت ثبت شد و برای سرپرستار ارسال شد');
   });
   
   // ===== ورود با کلید Enter =====
