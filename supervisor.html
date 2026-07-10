@@ -274,6 +274,17 @@ const JMONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرد
 function getRoleLabel(r){const map={head_nurse:'سرپرستار',senior:'پرستار ارشد',nurse:'پرستار',assistant:'کمکی',worker:'کارگر',behyar:'بهیار',service:'خدمات'};return map[r]||r;}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2000);}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function toLatinDigits(str){
+  if(str===undefined||str===null)return str;
+  const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩';
+  return String(str).replace(/[۰-۹٠-٩]/g,d=>{
+    const i=fa.indexOf(d);
+    if(i>-1)return String(i);
+    const j=ar.indexOf(d);
+    if(j>-1)return String(j);
+    return d;
+  });
+}
 function pad2(n){return String(n).padStart(2,'0');}
 function faDigits(n){const map={'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};return String(n).replace(/[0-9]/g,d=>map[d]);}
 function toPersianNumber(n){const str=String(n);const map={'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};return str.replace(/[0-9]/g,d=>map[d]);}
@@ -1287,9 +1298,9 @@ document.addEventListener('DOMContentLoaded',function(){
     const hospital=document.getElementById('sup-hospital').value.trim();
     const dept=document.getElementById('sup-dept').value.trim();
     const name=document.getElementById('sup-name').value.trim();
-    const code=document.getElementById('sup-code').value.trim();
-    const pass=document.getElementById('sup-password').value.trim();
-    const sup=data.supervisors.find(s=>s.hospitalName===hospital&&s.department===dept&&s.fullName===name&&s.employeeCode===code&&s.password===pass);
+    const code=toLatinDigits(document.getElementById('sup-code').value.trim());
+    const pass=toLatinDigits(document.getElementById('sup-password').value.trim());
+    const sup=data.supervisors.find(s=>s.hospitalName===hospital&&s.department===dept&&s.fullName===name&&toLatinDigits(s.employeeCode)===code&&toLatinDigits(s.password)===pass);
     if(sup){
       isAdmin=true;currentUser={id:sup.id};currentSup=sup;
       document.getElementById('status-badge').innerHTML='<span class="badge-supervisor">✅ سرپرستار</span>';
@@ -1340,8 +1351,8 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     if(e.target.id==='add-staff-btn'){
       const name=document.getElementById('new-staff-name').value.trim();
-      const code=document.getElementById('new-staff-code').value.trim();
-      const pass=document.getElementById('new-staff-password').value.trim();
+      const code=toLatinDigits(document.getElementById('new-staff-code').value.trim());
+      const pass=toLatinDigits(document.getElementById('new-staff-password').value.trim());
       const role=document.getElementById('new-staff-role').value;
       if(!name||!code||!pass){toast('همه فیلدها را پر کنید');return;}
       const sup=data.supervisors.find(s=>s.id===currentUser.id);
