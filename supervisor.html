@@ -532,7 +532,7 @@ function renderRequests(){
     staffRequests.forEach(r=>{
       const staff=data.staff.find(s=>s.id===r.staffId);
       let typeLabel='',shiftLabel='';
-      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';
+      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';else if(r.type==='other')typeLabel='📝 سایر';
       if(r.details.shift==='morning')shiftLabel='☀️ صبح';else if(r.details.shift==='evening')shiftLabel='🌤 عصر';else if(r.details.shift==='night')shiftLabel='🌙 شب';else if(r.details.shift==='all')shiftLabel='📅 کل روز';
       h+=`<div class="request-item"><div class="info"><span class="type">${typeLabel}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${formatDate(r.details.date)}</span><span class="date">🕐 ${shiftLabel}</span>${r.message?`<span style="color:#888;font-size:11px;">📝 ${r.message}</span>`:''}</div><div class="actions"><button class="btn btn-success btn-sm" onclick="approveStaffRequest('${r.id}')">✅ تأیید</button><button class="btn btn-danger btn-sm" onclick="rejectStaffRequest('${r.id}')">❌ رد</button><button class="btn btn-warning btn-sm" onclick="editStaffRequest('${r.id}')">✏️ ویرایش</button></div></div>`;
     });
@@ -540,7 +540,7 @@ function renderRequests(){
   h+=`<div class="request-section-title" style="margin-top:20px;">📝 ثبت درخواست جدید توسط سرپرستار</div>`;
   h+=`<div style="background:#e8f0fe;padding:10px;border-radius:6px;margin-bottom:12px;"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
     <select id="req-staff" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;min-width:120px;">${staffList.map(s=>`<option value="${s.id}">${s.fullName}</option>`).join('')}</select>
-    <select id="req-type" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="vacation">📅 مرخصی</option><option value="custom_shift">📋 شیفت سفارشی</option><option value="not_come">❌ نیامدن</option></select>
+    <select id="req-type" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="vacation">📅 مرخصی</option><option value="custom_shift">📋 شیفت سفارشی</option><option value="not_come">❌ نیامدن</option><option value="other">📝 سایر</option></select>
     <select id="req-year" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}" ${y===today.jy?'selected':''}>${faDigits(y)}</option>`).join('')}</select>
     <select id="req-month" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${JMONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===today.jm?'selected':''}>${m}</option>`).join('')}</select>
     <select id="req-day" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===today.jd?'selected':''}>${faDigits(d)}</option>`).join('')}</select>
@@ -553,7 +553,7 @@ function renderRequests(){
     supervisorRequests.forEach(r=>{
       const staff=data.staff.find(s=>s.id===r.staffId);
       let typeLabel='',shiftLabel='';
-      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';
+      if(r.type==='vacation')typeLabel='📅 مرخصی';else if(r.type==='custom_shift')typeLabel='📋 شیفت سفارشی';else if(r.type==='not_come')typeLabel='❌ نیامدن';else if(r.type==='other')typeLabel='📝 سایر';
       if(r.details.shift==='morning')shiftLabel='☀️ صبح';else if(r.details.shift==='evening')shiftLabel='🌤 عصر';else if(r.details.shift==='night')shiftLabel='🌙 شب';else if(r.details.shift==='all')shiftLabel='📅 کل روز';
       h+=`<div class="request-item"><div class="info"><span class="type">${typeLabel}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${formatDate(r.details.date)}</span><span class="date">🕐 ${shiftLabel}</span></div><div class="actions"><button class="btn btn-success btn-sm" onclick="approveRequest('${r.id}')">✅ تأیید</button><button class="btn btn-danger btn-sm" onclick="rejectRequest('${r.id}')">❌ رد</button></div></div>`;
     });
@@ -719,7 +719,7 @@ function renderNotifications(){
             if(dayKey!=='other'){dayLabel=formatDate(dayKey);}else dayLabel='بدون تاریخ';
             h+=`<div class="notif-day-divider">📌 ${dayLabel}</div>`;
             dayNotifs.slice().reverse().forEach(n=>{
-              const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
+              const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':n.type==='other'?'📝 سایر':'📝 ویرایش';
               const statusLabel=n.status==='approved'||n.status==='active'?'✅ تأیید شد':n.status==='rejected'?'❌ رد شد':'ℹ️ اطلاع';
               let statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
               if(n.type==='rule')statusClass='rule';
@@ -784,7 +784,7 @@ function renderReport(){
     if(events.length===0){h+=`<span class="empty-day">—</span>`;}
     else{
       events.forEach(n=>{
-        const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':'📝 ویرایش';
+        const typeLabel=n.type==='vacation'?'📅 مرخصی':n.type==='custom_shift'?'📋 شیفت سفارشی':n.type==='not_come'?'❌ نیامدن':n.type==='rule'?'⚖️ قانون':n.type==='other'?'📝 سایر':'📝 ویرایش';
         let statusClass=(n.status==='approved'||n.status==='active')?'approved':n.status==='rejected'?'rejected':'info';
         if(n.type==='rule')statusClass='rule';
         const statusLabel=(n.status==='approved'||n.status==='active')?'✅':n.status==='rejected'?'❌':'ℹ️';
@@ -1188,7 +1188,7 @@ function renderProfile(){
   else{
     h+=`<div class="request-history-list">`;
     recentRequests.reverse().forEach(r=>{
-      const typeLabel=r.type==='vacation'?'📅 مرخصی':r.type==='custom_shift'?'📋 شیفت سفارشی':r.type==='not_come'?'❌ نیامدن':'📝 ویرایش';
+      const typeLabel=r.type==='vacation'?'📅 مرخصی':r.type==='custom_shift'?'📋 شیفت سفارشی':r.type==='not_come'?'❌ نیامدن':r.type==='other'?'📝 سایر':'📝 ویرایش';
       let shiftLabel='';if(r.details?.shift==='morning')shiftLabel='صبح';else if(r.details?.shift==='evening')shiftLabel='عصر';else if(r.details?.shift==='night')shiftLabel='شب';else if(r.details?.shift==='all')shiftLabel='کل روز';
       const statusClass=r.status==='approved'?'approved':r.status==='rejected'?'rejected':'pending';
       const statusLabel=r.status==='approved'?'تأیید شده':r.status==='rejected'?'رد شده':'در انتظار';
