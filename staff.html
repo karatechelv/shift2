@@ -149,6 +149,10 @@ h1{font-size:22px;color:#1a3c5e;}
         <option value="evening">عصر</option>
         <option value="night">شب</option>
         <option value="all">کل روز</option>
+        <option value="morning+evening">صبح و عصر (با هم)</option>
+        <option value="morning+night">صبح و شب (با هم)</option>
+        <option value="evening+night">عصر و شب (با هم)</option>
+        <option value="morning+evening+night">هر سه شیفت (با هم)</option>
       </select>
     </div>
     <div class="row">
@@ -584,7 +588,8 @@ function renderNurseRequests() {
     const statusLabel = r.status === 'approved' ? '✅ تایید شده' : r.status === 'rejected' ? '❌ رد شده' : '⏳ در انتظار';
     const typeLabel = r.type === 'vacation' ? 'مرخصی' : r.type === 'not_come' ? 'نیامدن' : 'تغییر شیفت';
     const details = r.details || {};
-    const shiftLabel = details.shift === 'all' ? 'کل روز' : details.shift === 'morning' ? 'صبح' : details.shift === 'evening' ? 'عصر' : 'شب';
+    const shiftMap={morning:'صبح',evening:'عصر',night:'شب',all:'کل روز'};
+    const shiftLabel = (details.shift||'').split('+').map(s=>shiftMap[s]||s).join(' و ');
     
     h += `<tr>
       <td>${typeLabel}</td>
