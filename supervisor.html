@@ -316,8 +316,12 @@ function generateSchedule(d,y,m){
           const dayRestrictions=staff.rules.dayRestrictions||'';
           if(dayRestrictions){const wd=weekdayOfJalali(y,m,day);const dayName=WEEKDAYS[wd];if(dayRestrictions.includes(dayName))return false;}
         }
-        const ruleNotifs=allNotifs.filter(rn=>rn.staffId===n.id&&rn.type==='rule'&&rn.date===dateKey&&(rn.shift===shift||rn.shift==='all'));
-        if(ruleNotifs.length>0)return true;
+        const dayRuleNotif=allNotifs.find(rn=>rn.staffId===n.id&&rn.type==='rule'&&rn.date===dateKey);
+        if(dayRuleNotif){
+          if(dayRuleNotif.shift==='all')return false; // تعطیل طبق قانون = این روز اصلاً در برنامه قرار نمی‌گیرد
+          if(dayRuleNotif.shift===shift)return true; // شیفت مشخص‌شده در قانون همین شیفت است
+          return false; // قانون شیفت دیگری برای این روز تعیین کرده
+        }
         if(!validStaffIds.includes(n.id))return false;
         return true;
       });
@@ -343,6 +347,7 @@ let reportJy=1404,reportJm=4;
 let swapMode=false;
 let swapSelection=null;
 let profileStaffId=null;
+let rulesSelectedStaffId=null;
 let profileJy=1404,profileJm=4;
 
 function renderDeptRow(){
@@ -385,22 +390,7 @@ function renderSchedule(){
     const dateKey=y+'-'+pad2(m)+'-'+pad2(day);
     const dayData=sched[dateKey]||{};
     const isToday=(y===today.jy&&m===today.jm&&day===today.jd);
-    const dayNotifs=allNotifs.filter(n=>n.date===dateKey);
     h+='<div class="day-cell '+(isToday?'today':'')+'"><div class="day-num"><span>'+faDigits(day)+'</span>'+(isToday?'<span class="today-mark">امروز</span>':'')+'</div>';
-    if(dayNotifs.length>0){
-      h+='<div style="font-size:8px;margin-bottom:3px;background:#f8f9fa;padding:2px 4px;border-radius:3px;">';
-      dayNotifs.forEach(n=>{
-        let icon='📌',cls='';
-        if(n.type==='vacation'){icon='📅';cls='vacation';}
-        else if(n.type==='not_come'){icon='🚫';cls='notcome';}
-        else if(n.type==='custom_shift'){icon='📋';cls='custom';}
-        else if(n.type==='rule'){icon='⚖️';cls='rule';}
-        if(n.status==='approved'||n.status==='active'){cls+=' approved';}
-        else if(n.status==='rejected'){cls+=' rejected';}
-        h+='<span class="event-badge '+cls+'" style="margin:1px 2px;display:inline-block;font-size:7px;">'+icon+' '+n.staffName+'</span>';
-      });
-      h+='</div>';
-    }
     ['morning','evening','night'].forEach(sh=>{
       const d2=dayData[sh]||{nurses:[],headNurse:null};
       const assigned=d2.nurses||[], head=d2.headNurse;
@@ -847,27 +837,54 @@ function updateNotifications(){
 function renderRules(){
   const el=document.getElementById('view-rules');
   if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  try{
   const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
   const today=getTodayJalali();
+  // migrate old single-rule format to rulesList array
+  staffList.forEach(staff=>{
+    if(!staff.rulesList){
+      staff.rulesList=[];
+      if(staff.rules&&staff.rules.pattern){
+        staff.rulesList.push({id:uid(),pattern:staff.rules.pattern,startDate:staff.rules.startDate||'',active:!!staff.rules.active});
+      }
+    }
+  });
   let h='<div class="card"><h3>⚖️ قوانین سرپرستار</h3>';
   h+='<div style="font-size:12px;color:#888;margin-bottom:8px;">الگو را با کاما جدا کنید: صبح,صبح,عصر,تعطیل,شب,شب</div>';
-  h+='<div style="font-size:11px;color:#888;margin-bottom:10px;">✅ کلمات مجاز: <b>صبح</b>، <b>عصر</b>، <b>شب</b>، <b>تعطیل</b></div>';
-  if(staffList.length===0){h+='<div style="color:#888;font-size:13px;padding:8px;">هیچ پرسنلی ثبت نشده است</div>';}
-  else{
+  h+='<div style="font-size:11px;color:#888;margin-bottom:10px;">✅ کلمات مجاز: <b>صبح</b>، <b>عصر</b>، <b>شب</b>، <b>تعطیل</b> (تعطیل یعنی آن روز پرسنل در برنامهٔ شیفت قرار نمی‌گیرد)</div>';
+  if(staffList.length===0){
+    h+='<div style="color:#888;font-size:13px;padding:8px;">هیچ پرسنلی ثبت نشده است</div>';
+    h+='</div>';
+    el.innerHTML=h;
+    return;
+  }
+  if(!rulesSelectedStaffId||!staffList.find(s=>s.id===rulesSelectedStaffId)){rulesSelectedStaffId=staffList[0].id;}
+  h+='<div style="margin-bottom:12px;"><label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">👤 انتخاب پرسنل:</label>';
+  h+='<select id="rules-staff-select" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:tahoma;">';
+  staffList.forEach(staff=>{
+    h+=`<option value="${staff.id}" ${staff.id===rulesSelectedStaffId?'selected':''}>${staff.fullName}</option>`;
+  });
+  h+='</select></div>';
+
+  const staff=staffList.find(s=>s.id===rulesSelectedStaffId);
+  h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
+  h+=`<h4 style="font-size:14px;color:#1a3c5e;">قوانین ${staff.fullName}</h4>`;
+  h+=`<button class="btn btn-success btn-sm" onclick="addRule('${staff.id}')">➕ افزودن قانون جدید</button>`;
+  h+=`</div>`;
+
+  if(staff.rulesList.length===0){
+    h+='<div style="color:#888;font-size:13px;padding:8px;">هنوز قانونی برای این پرسنل ثبت نشده. روی «افزودن قانون جدید» بزنید.</div>';
+  }else{
     h+=`<table class="rules-table">`;
-    h+=`<thead><tr><th style="width:16%;">نام پرسنل</th><th style="width:24%;">الگوی قانون</th><th style="width:20%;">تاریخ شروع</th><th style="width:12%;">وضعیت</th><th style="width:14%;">پیش‌نمایش</th><th style="width:14%;">عملیات</th></tr></thead>`;
+    h+=`<thead><tr><th style="width:26%;">الگوی قانون</th><th style="width:22%;">تاریخ شروع</th><th style="width:14%;">وضعیت</th><th style="width:18%;">پیش‌نمایش</th><th style="width:20%;">عملیات</th></tr></thead>`;
     h+=`<tbody>`;
-    staffList.forEach(staff=>{
-      const rules=staff.rules||{};
-      const pattern=rules.pattern||'';
-      const startDate=rules.startDate||(today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd));
-      const isActive=rules.active===true;
-      const isPending=rules.active===undefined||rules.active===null;
+    staff.rulesList.forEach(rule=>{
+      const pattern=rule.pattern||'';
+      const startDate=rule.startDate||(today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd));
+      const isActive=rule.active===true;
       let statusClass='pending';
       let statusLabel='⏳ در انتظار';
       if(isActive){statusClass='active';statusLabel='✅ فعال';}
-      const existingNotif=(data.notifications||[]).find(n=>n.staffId===staff.id&&n.type==='rule'&&(n.status==='approved'||n.status==='active'));
-      if(existingNotif&&!isActive){statusClass='active';statusLabel='✅ فعال (تایید شده)';}
       let previewHtml='';
       if(pattern){
         const parts=pattern.split(',').map(p=>p.trim());
@@ -878,49 +895,52 @@ function renderRules(){
         }).join('');
         if(parts.length>5)previewHtml+=' <span style="color:#888;font-size:10px;">+...</span>';
       }
-      h+=`<tr data-staff="${staff.id}">`;
-      h+=`<td class="staff-name">${staff.fullName}</td>`;
-      h+=`<td><input type="text" class="rule-pattern-input" data-staff="${staff.id}" value="${pattern}" placeholder="مثلاً: صبح,صبح,عصر,تعطیل,شب,شب" style="width:100%;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:tahoma;direction:ltr;text-align:center;"></td>`;
+      h+=`<tr data-rule="${rule.id}" data-staff="${staff.id}">`;
+      h+=`<td><input type="text" class="rule-pattern-input" data-staff="${staff.id}" data-rule="${rule.id}" value="${pattern}" placeholder="مثلاً: صبح,صبح,عصر,تعطیل,شب,شب" style="width:100%;padding:4px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:tahoma;direction:ltr;text-align:center;"></td>`;
       h+=`<td><div class="date-selects">`;
-      h+=`<select class="rule-start-year" data-staff="${staff.id}">`;
+      h+=`<select class="rule-start-year" data-staff="${staff.id}" data-rule="${rule.id}">`;
       for(let y=today.jy-1;y<=today.jy+1;y++){h+=`<option value="${y}" ${y===parseInt(startDate.split('-')[0])?'selected':''}>${faDigits(y)}</option>`;}
       h+=`</select>`;
-      h+=`<select class="rule-start-month" data-staff="${staff.id}">`;
+      h+=`<select class="rule-start-month" data-staff="${staff.id}" data-rule="${rule.id}">`;
       JMONTHS.forEach((m,i)=>{h+=`<option value="${i+1}" ${i+1===parseInt(startDate.split('-')[1])?'selected':''}>${m}</option>`;});
       h+=`</select>`;
-      h+=`<select class="rule-start-day" data-staff="${staff.id}">`;
+      h+=`<select class="rule-start-day" data-staff="${staff.id}" data-rule="${rule.id}">`;
       for(let d=1;d<=31;d++){h+=`<option value="${d}" ${d===parseInt(startDate.split('-')[2])?'selected':''}>${faDigits(d)}</option>`;}
       h+=`</select>`;
       h+=`</div></td>`;
       h+=`<td><span class="rule-status ${statusClass}">${statusLabel}</span></td>`;
       h+=`<td><div class="rule-preview">${previewHtml||'<span style="color:#ccc;">—</span>'}</div></td>`;
       h+=`<td><div class="rule-actions">`;
-      if(!isActive && !existingNotif){
-        h+=`<button class="btn-approve" onclick="approveRule('${staff.id}')">✅ تایید</button>`;
+      if(!isActive){
+        h+=`<button class="btn-approve" onclick="approveRule('${staff.id}','${rule.id}')">✅ تایید</button>`;
+      }else{
+        h+=`<button class="btn-reject" onclick="rejectRule('${staff.id}','${rule.id}')">⏸ غیرفعال</button>`;
       }
-      if(isActive || existingNotif){
-        h+=`<button class="btn-reject" onclick="rejectRule('${staff.id}')">❌ غیرفعال</button>`;
-      }
+      h+=`<button class="btn-x" style="border:1px solid #dc3545;border-radius:4px;padding:2px 6px;" onclick="deleteRule('${staff.id}','${rule.id}')">🗑 حذف</button>`;
       h+=`</div></td>`;
       h+=`</tr>`;
     });
     h+=`</tbody></table>`;
-    h+=`<div style="margin-top:8px;font-size:11px;color:#888;">💡 برای تغییر قانون، متن را ویرایش کنید. سپس دکمه تایید را بزنید تا وارد گزارش اعلانات شود.</div>`;
+    h+=`<div style="margin-top:8px;font-size:11px;color:#888;">💡 برای هر قانون، متن را ویرایش کنید و دکمهٔ تایید را بزنید تا وارد گزارش اعلانات شود. برای حذف کامل یک قانون از «🗑 حذف» استفاده کنید.</div>`;
   }
   h+=`</div>`;
   el.innerHTML=h;
-  
+
+  document.getElementById('rules-staff-select').addEventListener('change',function(){
+    rulesSelectedStaffId=this.value;
+    renderRules();
+  });
   document.querySelectorAll('.rule-pattern-input').forEach(input=>{
     input.addEventListener('change',function(){
       const staffId=this.dataset.staff;
+      const ruleId=this.dataset.rule;
       const pattern=this.value.trim();
-      const staff=data.staff.find(s=>s.id===staffId);
-      if(!staff){toast('پرسنل یافت نشد');return;}
-      if(!staff.rules)staff.rules={};
-      staff.rules.pattern=pattern;
-      staff.rules.active=false;
-      const nurse=data.nurses.find(n=>n.id===staffId);
-      if(nurse){if(!nurse.rules)nurse.rules={};nurse.rules.pattern=pattern;nurse.rules.active=false;}
+      const s=data.staff.find(x=>x.id===staffId);
+      if(!s){toast('پرسنل یافت نشد');return;}
+      const rule=(s.rulesList||[]).find(r=>r.id===ruleId);
+      if(!rule){toast('قانون یافت نشد');return;}
+      rule.pattern=pattern;
+      rule.active=false;
       saveData(data);
       renderRules();
       toast('قانون ویرایش شد، برای فعال‌سازی دکمه تایید را بزنید');
@@ -929,82 +949,114 @@ function renderRules(){
   document.querySelectorAll('.rule-start-year,.rule-start-month,.rule-start-day').forEach(sel=>{
     sel.addEventListener('change',function(){
       const staffId=this.dataset.staff;
+      const ruleId=this.dataset.rule;
       const row=this.closest('tr');
       const year=row.querySelector('.rule-start-year').value;
       const month=row.querySelector('.rule-start-month').value;
       const day=row.querySelector('.rule-start-day').value;
       const startDate=year+'-'+pad2(month)+'-'+pad2(day);
-      const staff=data.staff.find(s=>s.id===staffId);
-      if(!staff){toast('پرسنل یافت نشد');return;}
-      if(!staff.rules)staff.rules={};
-      staff.rules.startDate=startDate;
-      const nurse=data.nurses.find(n=>n.id===staffId);
-      if(nurse){if(!nurse.rules)nurse.rules={};nurse.rules.startDate=startDate;}
+      const s=data.staff.find(x=>x.id===staffId);
+      if(!s){toast('پرسنل یافت نشد');return;}
+      const rule=(s.rulesList||[]).find(r=>r.id===ruleId);
+      if(!rule){toast('قانون یافت نشد');return;}
+      rule.startDate=startDate;
+      rule.active=false;
       saveData(data);
-      toast('تاریخ شروع ذخیره شد');
+      toast('تاریخ شروع ذخیره شد؛ برای فعال‌سازی دکمه تایید را بزنید');
+      renderRules();
     });
   });
+  }catch(err){
+    console.error('renderRules error:',err);
+    el.innerHTML='<div class="card">⚠️ خطا در بارگذاری قوانین. جزئیات خطا در کنسول مرورگر (F12) موجود است: '+err.message+'</div>';
+  }
 }
+
+window.addRule = function(staffId){
+  const staff=data.staff.find(s=>s.id===staffId);
+  if(!staff){toast('پرسنل یافت نشد');return;}
+  if(!staff.rulesList)staff.rulesList=[];
+  const today=getTodayJalali();
+  staff.rulesList.push({id:uid(),pattern:'',startDate:today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd),active:false});
+  saveData(data);
+  renderRules();
+};
+
+window.deleteRule = function(staffId,ruleId){
+  const staff=data.staff.find(s=>s.id===staffId);
+  if(!staff){toast('پرسنل یافت نشد');return;}
+  if(!confirm('آیا از حذف کامل این قانون مطمئن هستید؟'))return;
+  staff.rulesList=(staff.rulesList||[]).filter(r=>r.id!==ruleId);
+  data.notifications=(data.notifications||[]).filter(n=>!(n.staffId===staffId&&n.type==='rule'&&n.ruleId===ruleId));
+  saveData(data);
+  renderRules();
+  renderReport();
+  renderSchedule();
+  updateNotifications();
+  toast('🗑 قانون حذف شد');
+};
 
 // ================================================================
 // تایید قانون - وارد شدن به گزارش اعلانات
 // ================================================================
-window.approveRule = function(staffId) {
+window.approveRule = function(staffId, ruleId) {
   const staff = data.staff.find(s => s.id === staffId);
   if (!staff) { toast('پرسنل یافت نشد'); return; }
-  if (!staff.rules || !staff.rules.pattern) { toast('لطفاً ابتدا قانون را وارد کنید'); return; }
-  
-  const pattern = staff.rules.pattern;
-  const startDate = staff.rules.startDate || (getTodayJalali().jy + '-' + pad2(getTodayJalali().jm) + '-' + pad2(getTodayJalali().jd));
-  
-  // حذف قوانین قبلی این پرسنل
-  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule'));
-  
-  // ساخت قانون
-  const parts = pattern.split(',').map(p => p.trim());
+  const rule = (staff.rulesList||[]).find(r => r.id === ruleId);
+  if (!rule || !rule.pattern) { toast('لطفاً ابتدا الگوی قانون را وارد کنید'); return; }
+
+  const pattern = rule.pattern;
+  const startDate = rule.startDate || (getTodayJalali().jy + '-' + pad2(getTodayJalali().jm) + '-' + pad2(getTodayJalali().jd));
+
+  // حذف رکوردهای قبلی همین قانون (نه قوانین دیگر همین پرسنل)
+  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule' && n.ruleId === ruleId));
+
+  const parts = pattern.split(',').map(p => p.trim()).filter(p => p.length > 0);
+  if (parts.length === 0) { toast('الگوی قانون نامعتبر است'); return; }
   const startParts = startDate.split('-');
   let currentJY = parseInt(startParts[0]), currentJM = parseInt(startParts[1]), currentJD = parseInt(startParts[2]);
   if (isNaN(currentJY) || isNaN(currentJM) || isNaN(currentJD)) {
     const today = getTodayJalali();
     currentJY = today.jy; currentJM = today.jm; currentJD = today.jd;
   }
-  
+  const startYear = currentJY;
+
   let patternIndex = 0;
   const maxDays = 365;
   for (let i = 0; i < maxDays; i++) {
     const dateKey = currentJY + '-' + pad2(currentJM) + '-' + pad2(currentJD);
     const shiftType = parts[patternIndex % parts.length];
-    
+
     let shift = '';
     if (shiftType === 'صبح') shift = 'morning';
     else if (shiftType === 'عصر') shift = 'evening';
     else if (shiftType === 'شب') shift = 'night';
-    else shift = 'all';
-    
+    else shift = 'all'; // تعطیل = آف؛ یعنی این روز اصلاً در برنامه شیفت قرار نمی‌گیرد
+
     data.notifications.push({
       id: uid(),
+      ruleId: ruleId,
       type: 'rule',
       staffId: staffId,
       staffName: staff.fullName,
       date: dateKey,
       shift: shift,
+      shiftLabelFa: shiftType,
       status: 'approved',
       pattern: pattern,
       time: Date.now(),
       seen: false
     });
-    
+
     patternIndex++;
     const daysInMonth = jalaliMonthLength(currentJY, currentJM);
     currentJD++;
     if (currentJD > daysInMonth) { currentJD = 1; currentJM++; if (currentJM > 12) { currentJM = 1; currentJY++; } }
-    if (currentJY > startParts[0] + 1) break;
+    if (currentJY > startYear + 1) break;
   }
-  
-  staff.rules.active = true;
-  const nurse = data.nurses.find(n => n.id === staffId);
-  if (nurse) { if (!nurse.rules) nurse.rules = {}; nurse.rules.active = true; }
-  
+
+  rule.active = true;
+
   saveData(data);
   renderRules();
   renderReport(); // <-- آپدیت گزارش اعلانات
@@ -1013,19 +1065,18 @@ window.approveRule = function(staffId) {
   toast('✅ قانون تایید شد و وارد گزارش اعلانات گردید');
 };
 
-window.rejectRule = function(staffId) {
+window.rejectRule = function(staffId, ruleId) {
   const staff = data.staff.find(s => s.id === staffId);
   if (!staff) { toast('پرسنل یافت نشد'); return; }
-  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule'));
-  if (staff.rules) staff.rules.active = false;
-  const nurse = data.nurses.find(n => n.id === staffId);
-  if (nurse && nurse.rules) nurse.rules.active = false;
+  const rule = (staff.rulesList||[]).find(r => r.id === ruleId);
+  data.notifications = (data.notifications || []).filter(n => !(n.staffId === staffId && n.type === 'rule' && n.ruleId === ruleId));
+  if (rule) rule.active = false;
   saveData(data);
   renderRules();
   renderReport();
   renderSchedule();
   updateNotifications();
-  toast('❌ قانون غیرفعال شد');
+  toast('⏸ قانون غیرفعال شد');
 };
 
 function renderProfile(){
@@ -1158,7 +1209,7 @@ function changeProfileMonth(delta){
   renderProfile();
 }
 window.changeProfileMonth=changeProfileMonth;
-function editRulesFromProfile(staffId){activeTab='rules';renderAll();setTimeout(()=>{const row=document.querySelector(`tr[data-staff="${staffId}"]`);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.style.background='#fff3cd';setTimeout(()=>{row.style.background='';},3000);}},500);}
+function editRulesFromProfile(staffId){rulesSelectedStaffId=staffId;activeTab='rules';renderAll();setTimeout(()=>{const row=document.querySelector(`tr[data-staff="${staffId}"]`);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.style.background='#fff3cd';setTimeout(()=>{row.style.background='';},3000);}},500);}
 window.editRulesFromProfile=editRulesFromProfile;
 
 function renderSettings(){
