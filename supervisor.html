@@ -577,7 +577,8 @@ function renderRequestRow(r,source){
   const staff=data.staff.find(s=>s.id===r.staffId);
   const statusBadge=r.status==='approved'?'<span class="status-badge approved">✅ تأیید شده</span>':r.status==='rejected'?'<span class="status-badge rejected">❌ رد شده</span>':'<span class="status-badge pending">⏳ در انتظار</span>';
   const sourceBadge=source==='staff'?'<span style="background:#e3f2fd;color:#1565c0;border-radius:3px;padding:0 5px;font-size:9px;">ارسالی پرسنل</span>':'<span style="background:#f3e5f5;color:#6a1b9a;border-radius:3px;padding:0 5px;font-size:9px;">ثبت سرپرستار</span>';
-  let h=`<div class="request-item" data-req="${r.id}"><div class="info"><span class="type">${typeLabelFa(r.type)}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${formatDate(r.details.date)}</span><span class="date">🕐 ${shiftLabelFa(r.details.shift)}</span>${statusBadge}${sourceBadge}${r.message?`<span style="color:#888;font-size:11px;">📝 ${r.message}</span>`:''}</div><div class="actions">`;
+  const dateLabel=(r.details.endDate&&r.details.endDate!==r.details.date)?`${formatDate(r.details.date)} تا ${formatDate(r.details.endDate)}`:formatDate(r.details.date);
+  let h=`<div class="request-item" data-req="${r.id}"><div class="info"><span class="type">${typeLabelFa(r.type)}</span><span><strong>${staff?staff.fullName:'نامشخص'}</strong></span><span class="date">📆 ${dateLabel}</span><span class="date">🕐 ${shiftLabelFa(r.details.shift)}</span>${statusBadge}${sourceBadge}${r.message?`<span style="color:#888;font-size:11px;">📝 ${r.message}</span>`:''}</div><div class="actions">`;
   if(r.status==='pending'){
     if(source==='staff'){
       h+=`<button class="btn btn-success btn-sm" onclick="approveStaffRequest('${r.id}')">✅ تأیید</button><button class="btn btn-danger btn-sm" onclick="rejectStaffRequest('${r.id}')">❌ رد</button>`;
@@ -625,12 +626,17 @@ function renderRequests(){
   h+=`<div style="background:#e8f0fe;padding:10px;border-radius:6px;margin-bottom:12px;"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
     <select id="req-staff" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;min-width:120px;">${staffList.map(s=>`<option value="${s.id}">${s.fullName}</option>`).join('')}</select>
     <select id="req-type" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="vacation">📅 مرخصی</option><option value="custom_shift">📋 شیفت سفارشی</option><option value="not_come">❌ نیامدن</option><option value="other">📝 سایر</option></select>
+    <span style="font-size:11px;color:#555;">از:</span>
     <select id="req-year" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}" ${y===today.jy?'selected':''}>${faDigits(y)}</option>`).join('')}</select>
     <select id="req-month" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${JMONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===today.jm?'selected':''}>${m}</option>`).join('')}</select>
     <select id="req-day" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${d===today.jd?'selected':''}>${faDigits(d)}</option>`).join('')}</select>
+    <span style="font-size:11px;color:#555;">تا (اختیاری):</span>
+    <select id="req-end-year" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="">—</option>${Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}">${faDigits(y)}</option>`).join('')}</select>
+    <select id="req-end-month" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="">—</option>${JMONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}</select>
+    <select id="req-end-day" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;"><option value="">—</option>${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}">${faDigits(d)}</option>`).join('')}</select>
     <select id="req-shift" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;">${shiftReqOptionsHtml('all')}</select>
     <button class="btn btn-success btn-sm" id="submit-request-btn">➕ ثبت درخواست</button>
-  </div></div>`;
+  </div><div style="font-size:10px;color:#888;margin-top:4px;">💡 برای درخواست چندروزه (مثلاً مرخصی یک هفته‌ای)، فیلد «تا» را هم پر کنید.</div></div>`;
 
   h+='<div class="request-section-title">📚 تاریخچه (تأیید‌شده / ردشده)</div>';
   if(processed.length===0){h+='<div style="color:#888;font-size:13px;padding:8px;">هنوز درخواست تأیید یا ردشده‌ای وجود ندارد</div>';}
@@ -653,60 +659,91 @@ function renderRequests(){
     const day=document.getElementById('req-day').value;
     const shift=document.getElementById('req-shift').value;
     const dateKey=year+'-'+pad2(month)+'-'+pad2(day);
+    const eYear=document.getElementById('req-end-year').value;
+    const eMonth=document.getElementById('req-end-month').value;
+    const eDay=document.getElementById('req-end-day').value;
+    const endDateKey=(eYear&&eMonth&&eDay)?(eYear+'-'+pad2(eMonth)+'-'+pad2(eDay)):'';
     const staff=data.staff.find(s=>s.id===staffId);
     if(!staff){toast('پرسنل نامعتبر');return;}
     const exist=data.requests.find(r=>r.staffId===staffId&&r.details.date===dateKey&&r.details.shift===shift&&r.status==='pending');
     if(exist){toast('این درخواست قبلاً ثبت شده');return;}
-    data.requests.push({id:uid(),staffId:staffId,type:type,details:{date:dateKey,shift:shift},status:'pending',message:'',createdAt:new Date().toISOString()});
+    data.requests.push({id:uid(),staffId:staffId,type:type,details:{date:dateKey,endDate:endDateKey,shift:shift},status:'pending',message:'',createdAt:new Date().toISOString()});
     saveData(data);
     renderRequests();
     toast('✅ درخواست ثبت شد');
   });
 }
 
+function jalaliDateRange(startDate,endDate){
+  if(!endDate||endDate===startDate)return [startDate];
+  const dates=[];
+  let parts=startDate.split('-').map(Number);
+  let y=parts[0],m=parts[1],d=parts[2];
+  const ep=endDate.split('-').map(Number);
+  const ey=ep[0],em=ep[1],ed=ep[2];
+  let guard=0;
+  while(guard<400){
+    dates.push(y+'-'+pad2(m)+'-'+pad2(d));
+    if(y===ey&&m===em&&d===ed)break;
+    const dim=jalaliMonthLength(y,m);
+    d++;
+    if(d>dim){d=1;m++;if(m>12){m=1;y++;}}
+    guard++;
+  }
+  return dates;
+}
 function applyRequestDataEffect(req,staff,nurse){
   const subShifts=(req.details.shift||'all').split('+');
+  const dateList=jalaliDateRange(req.details.date,req.details.endDate);
+  dateList.forEach(dateKey=>{
   subShifts.forEach(sh=>{
     if(req.type==='vacation'){
       if(!staff.vacations)staff.vacations=[];
-      const fullDate=sh==='all'?req.details.date:req.details.date+':'+sh;
+      const fullDate=sh==='all'?dateKey:dateKey+':'+sh;
       if(!staff.vacations.includes(fullDate))staff.vacations.push(fullDate);
       if(nurse){if(!nurse.vacations)nurse.vacations=[];if(!nurse.vacations.includes(fullDate))nurse.vacations.push(fullDate);}
     }else if(req.type==='custom_shift'){
       if(!staff.customShifts)staff.customShifts=[];
-      const fullDate=req.details.date+':'+sh;
+      const fullDate=dateKey+':'+sh;
       if(!staff.customShifts.includes(fullDate))staff.customShifts.push(fullDate);
       if(nurse){if(!nurse.customShifts)nurse.customShifts=[];if(!nurse.customShifts.includes(fullDate))nurse.customShifts.push(fullDate);}
     }else if(req.type==='not_come'){
       if(!staff.notComeRequests)staff.notComeRequests=[];
-      if(!staff.notComeRequests.find(r=>r.date===req.details.date&&r.shift===sh)){
-        staff.notComeRequests.push({date:req.details.date,shift:sh});
-        if(nurse){if(!nurse.notComeRequests)nurse.notComeRequests=[];if(!nurse.notComeRequests.find(r=>r.date===req.details.date&&r.shift===sh))nurse.notComeRequests.push({date:req.details.date,shift:sh});}
+      if(!staff.notComeRequests.find(r=>r.date===dateKey&&r.shift===sh)){
+        staff.notComeRequests.push({date:dateKey,shift:sh});
+        if(nurse){if(!nurse.notComeRequests)nurse.notComeRequests=[];if(!nurse.notComeRequests.find(r=>r.date===dateKey&&r.shift===sh))nurse.notComeRequests.push({date:dateKey,shift:sh});}
       }
     }
+  });
   });
 }
 function revertRequestDataEffect(req,staff,nurse){
   if(!staff)return;
   const subShifts=(req.details.shift||'all').split('+');
+  const dateList=jalaliDateRange(req.details.date,req.details.endDate);
+  dateList.forEach(dateKey=>{
   subShifts.forEach(sh=>{
     if(req.type==='vacation'){
-      const fullDate=sh==='all'?req.details.date:req.details.date+':'+sh;
+      const fullDate=sh==='all'?dateKey:dateKey+':'+sh;
       if(staff.vacations)staff.vacations=staff.vacations.filter(v=>v!==fullDate);
       if(nurse&&nurse.vacations)nurse.vacations=nurse.vacations.filter(v=>v!==fullDate);
     }else if(req.type==='custom_shift'){
-      const fullDate=req.details.date+':'+sh;
+      const fullDate=dateKey+':'+sh;
       if(staff.customShifts)staff.customShifts=staff.customShifts.filter(v=>v!==fullDate);
       if(nurse&&nurse.customShifts)nurse.customShifts=nurse.customShifts.filter(v=>v!==fullDate);
     }else if(req.type==='not_come'){
-      if(staff.notComeRequests)staff.notComeRequests=staff.notComeRequests.filter(r=>!(r.date===req.details.date&&r.shift===sh));
-      if(nurse&&nurse.notComeRequests)nurse.notComeRequests=nurse.notComeRequests.filter(r=>!(r.date===req.details.date&&r.shift===sh));
+      if(staff.notComeRequests)staff.notComeRequests=staff.notComeRequests.filter(r=>!(r.date===dateKey&&r.shift===sh));
+      if(nurse&&nurse.notComeRequests)nurse.notComeRequests=nurse.notComeRequests.filter(r=>!(r.date===dateKey&&r.shift===sh));
     }
+  });
   });
 }
 function notifyRequestSubShifts(req,staffName,status){
   const subShifts=(req.details.shift||'all').split('+');
-  subShifts.forEach(sh=>{ addNotification(req.type,req.staffId,staffName,req.details.date,sh,status); });
+  const dateList=jalaliDateRange(req.details.date,req.details.endDate);
+  dateList.forEach(dateKey=>{
+    subShifts.forEach(sh=>{ addNotification(req.type,req.staffId,staffName,dateKey,sh,status); });
+  });
 }
 function revertStaffRequestEffect(req){
   const staff=data.staff.find(s=>s.id===req.staffId);
@@ -720,7 +757,7 @@ window.deleteStaffRequest=function(id){
   if(!confirm('آیا از حذف کامل این درخواست مطمئن هستید؟'))return;
   if(req.status==='approved')revertStaffRequestEffect(req);
   data.staffRequests=data.staffRequests.filter(r=>r.id!==id);
-  data.notifications=(data.notifications||[]).filter(n=>!(n.staffId===req.staffId&&n.date===req.details.date&&(req.details.shift||'').split('+').includes(n.shift)&&n.type===req.type&&n.type!=='rule'));
+  data.notifications=(data.notifications||[]).filter(n=>!(n.staffId===req.staffId&&jalaliDateRange(req.details.date,req.details.endDate).includes(n.date)&&(req.details.shift||'').split('+').includes(n.shift)&&n.type===req.type&&n.type!=='rule'));
   saveData(data);
   generateSchedule(activeDept,jy,jm);
   renderRequests();renderSchedule();renderNotifications();renderReport();
@@ -820,7 +857,7 @@ window.deleteRequest=function(id){
     if(staff)revertRequestDataEffect(req,staff,nurse);
   }
   data.requests=data.requests.filter(r=>r.id!==id);
-  data.notifications=(data.notifications||[]).filter(n=>!(n.staffId===req.staffId&&n.date===req.details.date&&(req.details.shift||'').split('+').includes(n.shift)&&n.type===req.type&&n.type!=='rule'));
+  data.notifications=(data.notifications||[]).filter(n=>!(n.staffId===req.staffId&&jalaliDateRange(req.details.date,req.details.endDate).includes(n.date)&&(req.details.shift||'').split('+').includes(n.shift)&&n.type===req.type&&n.type!=='rule'));
   saveData(data);
   generateSchedule(activeDept,jy,jm);
   renderRequests();renderSchedule();renderNotifications();renderReport();
