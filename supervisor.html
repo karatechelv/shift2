@@ -202,6 +202,7 @@ h1{font-size:22px;color:#1a3c5e;}
   <button class="tab" data-tab="notifications">🔔 اعلانات</button>
   <button class="tab" data-tab="report">📊 گزارش اعلانات</button>
   <button class="tab" data-tab="rules">⚖️ قوانین</button>
+  <button class="tab" data-tab="conflicts">⚠️ تداخل‌ها</button>
   <button class="tab" data-tab="profile">👤 پروفایل پرسنل</button>
   <button class="tab" data-tab="settings">⚙️ تنظیمات</button>
 </div>
@@ -211,6 +212,7 @@ h1{font-size:22px;color:#1a3c5e;}
 <div id="view-notifications" class="hidden"></div>
 <div id="view-report" class="hidden"></div>
 <div id="view-rules" class="hidden"></div>
+<div id="view-conflicts" class="hidden"></div>
 <div id="view-profile" class="hidden"></div>
 <div id="view-settings" class="hidden"></div>
 </div>
@@ -321,6 +323,12 @@ function generateSchedule(d,y,m){
         const notCome=n.notComeRequests||[];
         const isNotCome=notCome.some(nc=>nc.date===dateKey&&(nc.shift===shift||nc.shift==='all'));
         if(isNotCome)return false;
+        // اگر برای این نفر همین روز یک «شیفت سفارشی» ثبت شده، دیگر حق ندارد خودکار در شیفت دیگری از همان روز قرار بگیرد
+        const customs=n.customShifts||[];
+        const hasOtherCustomThisDay=customs.some(cs=>{const parts=cs.split(':');return parts[0]===dateKey&&parts[1]!==shift;});
+        if(hasOtherCustomThisDay)return false;
+        const hasCustomThisShift=customs.some(cs=>{const parts=cs.split(':');return parts[0]===dateKey&&parts[1]===shift;});
+        if(hasCustomThisShift)return true; // همین شیفت سفارشی همین شیفت است؛ در نظر گرفته شود
         const staff=staffList.find(s=>s.id===n.id);
         if(staff&&staff.rules){
           const dateRules=staff.rules.dateRestrictions||'';
@@ -1061,7 +1069,7 @@ const SHIFT_SLOT_OPTIONS=[
   {v:'عصر+شب',label:'🌤+🌙 عصر و شب'},
   {v:'صبح+عصر+شب',label:'☀️+🌤+🌙 هر سه شیفت'}
 ];
-const PATTERN_SLOT_COUNT=10;
+const PATTERN_SLOT_COUNT=30;
 function buildPatternSlotsHtml(idPrefix,existingPattern){
   const parts=(existingPattern||'').split(',').map(p=>p.trim()).filter(p=>p.length>0);
   let h='<div class="pattern-slots" style="display:flex;flex-wrap:wrap;gap:4px;">';
@@ -1088,6 +1096,37 @@ function readPatternFromSlots(idPrefix){
   return vals.join(',');
 }
 
+function countMonthlyShifts(staffId,y,m){
+  const sched=getSchedule(activeDept,y,m);
+  let count=0;
+  Object.keys(sched).forEach(dateKey=>{
+    ['morning','evening','night'].forEach(sh=>{
+      const d2=sched[dateKey][sh];
+      if(d2&&(d2.nurses||[]).includes(staffId))count++;
+    });
+  });
+  return count;
+}
+function buildMonthlyQuotaHtml(staffList){
+  if(!data.monthlyQuotas)data.monthlyQuotas={};
+  let h='<div class="card"><h3>🎯 سهمیهٔ ماهانهٔ تعداد شیفت هر پرسنل</h3>';
+  h+='<div style="font-size:11px;color:#888;margin-bottom:8px;">تعداد شیفتی که هر پرسنل باید در ماه جاری کار کند را مشخص کنید و با تعداد واقعی مقایسه کنید.</div>';
+  h+='<table class="rules-table"><thead><tr><th>نام پرسنل</th><th>هدف (شیفت در ماه)</th><th>واقعی (این ماه)</th><th>وضعیت</th></tr></thead><tbody>';
+  staffList.forEach(s=>{
+    const key=s.id+'_'+jy+'_'+jm;
+    const target=data.monthlyQuotas[key]!==undefined?data.monthlyQuotas[key]:0;
+    const actual=countMonthlyShifts(s.id,jy,jm);
+    let statusHtml='<span style="color:#888;">—</span>';
+    if(target>0){
+      if(actual===target)statusHtml='<span style="color:#28a745;">✅ مطابق</span>';
+      else if(actual<target)statusHtml='<span style="color:#dc3545;">⬇ '+faDigits(target-actual)+' کمتر</span>';
+      else statusHtml='<span style="color:#ffc107;">⬆ '+faDigits(actual-target)+' بیشتر</span>';
+    }
+    h+=`<tr><td>${s.fullName}</td><td><input type="number" min="0" max="31" class="quota-input" data-staff="${s.id}" value="${target}" style="width:60px;padding:4px;border:1px solid #ddd;border-radius:4px;"></td><td>${faDigits(actual)}</td><td>${statusHtml}</td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  return h;
+}
 function buildRulesSummaryHtml(staffList){
   const allRules=[];
   staffList.forEach(staff=>{
@@ -1102,7 +1141,7 @@ function buildRulesSummaryHtml(staffList){
     h+='<table class="rules-table"><thead><tr><th>پرسنل</th><th>الگو</th><th>تاریخ شروع</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
     allRules.forEach(({staff,rule})=>{
       const statusLabel=rule.active?'✅ فعال':'⏳ در انتظار';
-      const generalTag=rule.isGeneral?' <span style="background:#e1bee7;color:#4a148c;border-radius:3px;padding:0 4px;font-size:9px;">عمومی</span>':'';
+      const generalTag=rule.isGeneral?' <span style="background:#e1bee7;color:#4a148c;border-radius:3px;padding:0 4px;font-size:9px;">عمومی</span>':rule.isGroup?' <span style="background:#c8e6c9;color:#1b5e20;border-radius:3px;padding:0 4px;font-size:9px;">گروهی</span>':'';
       h+=`<tr>
         <td>${staff.fullName}${generalTag}</td>
         <td style="direction:ltr;text-align:center;font-size:11px;">${rule.pattern||'—'}</td>
@@ -1142,14 +1181,75 @@ function renderRules(){
     el.innerHTML=h;
     return;
   }
-  if(!rulesSelectedStaffId||(rulesSelectedStaffId!=='__all__'&&!staffList.find(s=>s.id===rulesSelectedStaffId))){rulesSelectedStaffId=staffList[0].id;}
+  h+=buildMonthlyQuotaHtml(staffList);
+  if(!rulesSelectedStaffId||(rulesSelectedStaffId!=='__all__'&&rulesSelectedStaffId!=='__group__'&&!staffList.find(s=>s.id===rulesSelectedStaffId))){rulesSelectedStaffId=staffList[0].id;}
   h+='<div style="margin-bottom:12px;"><label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">👤 انتخاب پرسنل:</label>';
   h+='<select id="rules-staff-select" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:tahoma;">';
   h+=`<option value="__all__" ${rulesSelectedStaffId==='__all__'?'selected':''}>🌐 همهٔ پرسنل (قانون عمومی)</option>`;
+  h+=`<option value="__group__" ${rulesSelectedStaffId==='__group__'?'selected':''}>👥 گروه انتخابی (چند نفر خاص)</option>`;
   staffList.forEach(staff=>{
     h+=`<option value="${staff.id}" ${staff.id===rulesSelectedStaffId?'selected':''}>${staff.fullName}</option>`;
   });
   h+='</select></div>';
+
+  if(rulesSelectedStaffId==='__group__'){
+    if(!data.groupRules)data.groupRules={};
+    if(!data.groupRules[currentUser.id])data.groupRules[currentUser.id]=[];
+    const groups=data.groupRules[currentUser.id];
+    h+='<div class="card"><h3>👥 قانون گروهی (فقط برای چند نفر خاص)</h3>';
+    h+='<div style="font-size:11px;color:#888;margin-bottom:10px;">چند نفر رو انتخاب کنید و برای همهٔ اون‌ها یکجا یک الگو تعریف کنید (بدون تأثیر روی بقیهٔ پرسنل).</div>';
+    h+='<button class="btn btn-success btn-sm" onclick="addGroupRule()">➕ ساخت گروه جدید</button>';
+    if(groups.length===0){
+      h+='<div style="color:#888;font-size:13px;padding:8px;">هنوز گروهی نساختید.</div>';
+    }else{
+      groups.forEach(g=>{
+        const gStartDate=g.startDate||(today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd));
+        const gEndDate=g.endDate||'';
+        const statusClass=g.active?'active':'pending';
+        const statusLabel=g.active?'✅ فعال':'⏳ در انتظار';
+        h+=`<div class="rule-card" style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;margin-bottom:12px;background:#fafbfc;">`;
+        h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span class="rule-status ${statusClass}">${statusLabel}</span>`;
+        h+=`<button class="btn-x" style="border:1px solid #dc3545;border-radius:4px;padding:2px 6px;" onclick="deleteGroupRule('${g.id}')">🗑 حذف گروه</button></div>`;
+        h+='<div style="margin-bottom:6px;"><label style="font-size:11px;color:#555;">اعضای گروه:</label><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">';
+        staffList.forEach(s=>{
+          h+=`<label style="background:${g.memberIds.includes(s.id)?'#e3f2fd':'#f5f5f5'};padding:2px 8px;border-radius:12px;font-size:11px;cursor:pointer;">
+            <input type="checkbox" class="group-member-cb" data-group="${g.id}" data-staff="${s.id}" ${g.memberIds.includes(s.id)?'checked':''} style="margin-left:4px;">${s.fullName}
+          </label>`;
+        });
+        h+='</div></div>';
+        h+=`<div style="margin-bottom:8px;display:flex;gap:12px;flex-wrap:wrap;">`;
+        h+=`<div><label style="font-size:11px;color:#555;">تاریخ شروع:</label><div class="date-selects">`;
+        h+=`<select class="group-start-year" data-group="${g.id}">`+Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}" ${y===parseInt(gStartDate.split('-')[0])?'selected':''}>${faDigits(y)}</option>`).join('')+`</select>`;
+        h+=`<select class="group-start-month" data-group="${g.id}">`+JMONTHS.map((m,i)=>`<option value="${i+1}" ${i+1===parseInt(gStartDate.split('-')[1])?'selected':''}>${m}</option>`).join('')+`</select>`;
+        h+=`<select class="group-start-day" data-group="${g.id}">`+Array.from({length:31},(_,i)=>i+1).map(dd=>`<option value="${dd}" ${dd===parseInt(gStartDate.split('-')[2])?'selected':''}>${faDigits(dd)}</option>`).join('')+`</select></div></div>`;
+        h+=`<div><label style="font-size:11px;color:#555;">تاریخ پایان (اختیاری):</label><div class="date-selects">`;
+        h+=`<select class="group-end-year" data-group="${g.id}"><option value="">—</option>`+Array.from({length:3},(_,i)=>today.jy+i-1).map(y=>`<option value="${y}" ${gEndDate&&y===parseInt(gEndDate.split('-')[0])?'selected':''}>${faDigits(y)}</option>`).join('')+`</select>`;
+        h+=`<select class="group-end-month" data-group="${g.id}"><option value="">—</option>`+JMONTHS.map((m,i)=>`<option value="${i+1}" ${gEndDate&&i+1===parseInt(gEndDate.split('-')[1])?'selected':''}>${m}</option>`).join('')+`</select>`;
+        h+=`<select class="group-end-day" data-group="${g.id}"><option value="">—</option>`+Array.from({length:31},(_,i)=>i+1).map(dd=>`<option value="${dd}" ${gEndDate&&dd===parseInt(gEndDate.split('-')[2])?'selected':''}>${faDigits(dd)}</option>`).join('')+`</select></div></div>`;
+        h+='</div>';
+        h+=`<div style="margin-bottom:6px;"><label style="font-size:11px;color:#555;">الگوی چرخش:</label>${buildPatternSlotsHtml('group-'+g.id,g.pattern||'')}</div>`;
+        h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
+        h+=`<button class="btn btn-secondary btn-sm" onclick="saveGroupPattern('${g.id}')">💾 ذخیره الگو</button>`;
+        if(!g.active){h+=`<button class="btn-approve" onclick="applyGroupRule('${g.id}')">✅ اعمال روی اعضای گروه</button>`;}
+        else{h+=`<button class="btn-reject" onclick="deactivateGroupRule('${g.id}')">⏸ غیرفعال</button>`;}
+        h+=`</div></div>`;
+      });
+    }
+    h+='</div>';
+    h+=buildRulesSummaryHtml(staffList);
+    el.innerHTML=h;
+    document.getElementById('rules-staff-select').addEventListener('change',function(){rulesSelectedStaffId=this.value;renderRules();});
+    document.querySelectorAll('.group-member-cb').forEach(cb=>{
+      cb.addEventListener('change',function(){
+        const g=data.groupRules[currentUser.id].find(x=>x.id===this.dataset.group);
+        if(!g)return;
+        if(this.checked){if(!g.memberIds.includes(this.dataset.staff))g.memberIds.push(this.dataset.staff);}
+        else{g.memberIds=g.memberIds.filter(id=>id!==this.dataset.staff);}
+        saveData(data);
+      });
+    });
+    return;
+  }
 
   if(rulesSelectedStaffId==='__all__'){
     if(!data.generalRules)data.generalRules={};
@@ -1208,7 +1308,7 @@ function renderRules(){
   h+=`<button class="btn btn-success btn-sm" onclick="addRule('${staff.id}')">➕ افزودن قانون جدید</button>`;
   h+=`</div>`;
 
-  // نمایش قانون عمومی (در صورت وجود) به‌صورت فقط-خواندنی؛ ویرایش فقط از بخش «همهٔ پرسنل» ممکن است
+  // نمایش قانون عمومی/گروهی (در صورت وجود) به‌صورت فقط-خواندنی
   const generalRuleOnStaff=(staff.rulesList||[]).find(r=>r.isGeneral);
   if(generalRuleOnStaff){
     h+=`<div class="card" style="background:#f3e5f5;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12px;">
@@ -1216,8 +1316,15 @@ function renderRules(){
       <button class="btn btn-secondary btn-sm" style="margin-right:6px;" onclick="rulesSelectedStaffId='__all__';renderRules();">مدیریت قانون عمومی</button>
     </div>`;
   }
+  const groupRulesOnStaff=(staff.rulesList||[]).filter(r=>r.isGroup);
+  groupRulesOnStaff.forEach(gr=>{
+    h+=`<div class="card" style="background:#e8f5e9;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12px;">
+      👥 این پرسنل عضو یک <b>گروه قانون</b> است: <span style="direction:ltr;display:inline-block;">${gr.pattern||'—'}</span> (${gr.active?'✅ فعال':'⏳ غیرفعال'})
+      <button class="btn btn-secondary btn-sm" style="margin-right:6px;" onclick="rulesSelectedStaffId='__group__';renderRules();">مدیریت گروه</button>
+    </div>`;
+  });
 
-  const individualRules=(staff.rulesList||[]).filter(r=>!r.isGeneral);
+  const individualRules=(staff.rulesList||[]).filter(r=>!r.isGeneral&&!r.isGroup);
   if(individualRules.length===0){
     h+='<div style="color:#888;font-size:13px;padding:8px;">هنوز قانون اختصاصی برای این پرسنل ثبت نشده. روی «افزودن قانون جدید» بزنید.</div>';
   }else{
@@ -1346,6 +1453,81 @@ function renderRules(){
     el.innerHTML='<div class="card">⚠️ خطا در بارگذاری قوانین. جزئیات خطا در کنسول مرورگر (F12) موجود است: '+err.message+'</div>';
   }
 }
+
+window.addGroupRule = function(){
+  if(!data.groupRules)data.groupRules={};
+  if(!data.groupRules[currentUser.id])data.groupRules[currentUser.id]=[];
+  const today=getTodayJalali();
+  data.groupRules[currentUser.id].push({id:uid(),memberIds:[],pattern:'',startDate:today.jy+'-'+pad2(today.jm)+'-'+pad2(today.jd),endDate:'',active:false});
+  saveData(data);
+  renderRules();
+};
+window.deleteGroupRule = function(groupId){
+  if(!confirm('آیا از حذف این گروه مطمئن هستید؟'))return;
+  const g=(data.groupRules[currentUser.id]||[]).find(x=>x.id===groupId);
+  if(g){
+    (g.memberIds||[]).forEach(staffId=>{
+      const staff=data.staff.find(s=>s.id===staffId);
+      if(staff)staff.rulesList=(staff.rulesList||[]).filter(r=>r.id!==groupId);
+    });
+    data.notifications=(data.notifications||[]).filter(n=>n.ruleId!==groupId);
+  }
+  data.groupRules[currentUser.id]=(data.groupRules[currentUser.id]||[]).filter(x=>x.id!==groupId);
+  saveData(data);
+  renderRules();renderReport();renderSchedule();updateNotifications();
+  toast('🗑 گروه حذف شد');
+};
+window.saveGroupPattern = function(groupId){
+  const g=(data.groupRules[currentUser.id]||[]).find(x=>x.id===groupId);
+  if(!g)return;
+  const pattern=readPatternFromSlots('group-'+groupId);
+  if(!pattern){toast('حداقل یک روز از الگو رو انتخاب کنید');return;}
+  const card=document.querySelector(`.group-start-year[data-group="${groupId}"]`).closest('.rule-card');
+  const year=card.querySelector('.group-start-year').value;
+  const month=card.querySelector('.group-start-month').value;
+  const day=card.querySelector('.group-start-day').value;
+  const eYear=card.querySelector('.group-end-year').value;
+  const eMonth=card.querySelector('.group-end-month').value;
+  const eDay=card.querySelector('.group-end-day').value;
+  g.pattern=pattern;
+  g.startDate=year+'-'+pad2(month)+'-'+pad2(day);
+  g.endDate=(eYear&&eMonth&&eDay)?(eYear+'-'+pad2(eMonth)+'-'+pad2(eDay)):'';
+  g.active=false;
+  saveData(data);
+  renderRules();
+  toast('💾 الگوی گروه ذخیره شد؛ برای اعمال دکمه بعدی را بزنید');
+};
+window.applyGroupRule = function(groupId){
+  const g=(data.groupRules[currentUser.id]||[]).find(x=>x.id===groupId);
+  if(!g||!g.pattern){toast('لطفاً ابتدا الگو را ذخیره کنید');return;}
+  if(!g.memberIds||g.memberIds.length===0){toast('حداقل یک نفر را به گروه اضافه کنید');return;}
+  g.memberIds.forEach(staffId=>{
+    const staff=data.staff.find(s=>s.id===staffId);
+    if(!staff)return;
+    if(!staff.rulesList)staff.rulesList=[];
+    staff.rulesList=staff.rulesList.filter(r=>r.id!==groupId);
+    const rule={id:groupId,pattern:g.pattern,startDate:g.startDate,endDate:g.endDate||'',active:false,isGroup:true};
+    staff.rulesList.push(rule);
+    generateRuleNotifications(staff,rule);
+  });
+  g.active=true;
+  saveData(data);
+  renderRules();renderReport();renderSchedule();updateNotifications();
+  toast('✅ قانون گروهی روی اعضای گروه اعمال شد');
+};
+window.deactivateGroupRule = function(groupId){
+  const g=(data.groupRules[currentUser.id]||[]).find(x=>x.id===groupId);
+  if(!g)return;
+  (g.memberIds||[]).forEach(staffId=>{
+    const staff=data.staff.find(s=>s.id===staffId);
+    if(staff){const rule=(staff.rulesList||[]).find(r=>r.id===groupId);if(rule)rule.active=false;}
+  });
+  data.notifications=(data.notifications||[]).filter(n=>n.ruleId!==groupId);
+  g.active=false;
+  saveData(data);
+  renderRules();renderReport();renderSchedule();updateNotifications();
+  toast('⏸ قانون گروهی غیرفعال شد');
+};
 
 window.saveGeneralPattern = function(){
   const pattern=readPatternFromSlots('general-rule');
@@ -1690,7 +1872,18 @@ function renderSettings(){
   h+='<input type="checkbox" id="night-rest" '+(data.settings?.enforceNightRest!==false?'checked':'')+'>';
   h+='<span style="color:#888;font-size:12px;">فعال</span>';
   h+='</div></div>';
-  h+='<div class="card"><h3>📊 تعداد نفرات مورد نیاز روزانه</h3>';
+  const staffListForHead=data.staff.filter(s=>s.supervisorId===currentUser.id&&(s.departmentId||'')===d);
+  const todayHead=getTodayJalali();
+  h+='<div class="card"><h3>👑 تعیین سرپرست شیفت</h3>';
+  h+='<div style="font-size:11px;color:#888;margin-bottom:8px;">تاریخ، شیفت و فرد را انتخاب کنید تا به‌عنوان سرپرست همان شیفت ثبت شود (فرد باید در همان شیفت حضور داشته باشد).</div>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+  h+='<select id="head-year">'+Array.from({length:3},(_,i)=>todayHead.jy+i-1).map(y=>'<option value="'+y+'" '+(y===todayHead.jy?'selected':'')+'>'+faDigits(y)+'</option>').join('')+'</select>';
+  h+='<select id="head-month">'+JMONTHS.map((m,i)=>'<option value="'+(i+1)+'" '+(i+1===jm?'selected':'')+'>'+m+'</option>').join('')+'</select>';
+  h+='<select id="head-day">'+Array.from({length:31},(_,i)=>i+1).map(dd=>'<option value="'+dd+'">'+faDigits(dd)+'</option>').join('')+'</select>';
+  h+='<select id="head-shift"><option value="morning">☀️ صبح</option><option value="evening">🌤 عصر</option><option value="night">🌙 شب</option></select>';
+  h+='<select id="head-staff">'+staffListForHead.map(s=>'<option value="'+s.id+'">'+s.fullName+'</option>').join('')+'</select>';
+  h+='<button class="btn btn-primary btn-sm" id="set-head-nurse-btn">👑 ثبت به‌عنوان سرپرست</button>';
+  h+='</div></div>';
   h+='<div style="font-size:11px;color:#888;margin-bottom:6px;">تعداد پرسنل مورد نیاز برای هر روز و هر شیفت (قابل تغییر)</div>';
   h+='<div style="overflow:auto;max-height:450px;">';
   h+='<table class="daily-req-table"><tr><th>روز</th><th colspan="4">صبح</th><th colspan="4">عصر</th><th colspan="4">شب</th></tr>';
@@ -1699,12 +1892,13 @@ function renderSettings(){
     const dateKey=jy+'-'+pad2(jm)+'-'+pad2(day);
     const wd=weekdayOfJalali(jy,jm,day);
     h+='<tr><td>'+faDigits(day)+' ('+WEEKDAYS[wd]+')</td>';
+    const reqOpts=(val)=>{let o='';for(let i=0;i<=20;i++){o+='<option value="'+i+'" '+(i===val?'selected':'')+'>'+faDigits(i)+'</option>';}return o;};
     ['morning','evening','night'].forEach(shift=>{
       const req=getDailyReq(d,dateKey,shift);
-      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="nurse" value="'+(req.nurse||4)+'"></td>';
-      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="service" value="'+(req.service||1)+'"></td>';
-      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="helper" value="'+(req.helper||1)+'"></td>';
-      h+='<td><input type="number" min="0" max="20" class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="behyar" value="'+(req.behyar||1)+'"></td>';
+      h+='<td><select class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="nurse">'+reqOpts(req.nurse||4)+'</select></td>';
+      h+='<td><select class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="service">'+reqOpts(req.service||1)+'</select></td>';
+      h+='<td><select class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="helper">'+reqOpts(req.helper||1)+'</select></td>';
+      h+='<td><select class="daily-req-input" data-dept="'+d+'" data-date="'+dateKey+'" data-shift="'+shift+'" data-type="behyar">'+reqOpts(req.behyar||1)+'</select></td>';
     });
     h+='</tr>';
   }
@@ -1720,7 +1914,120 @@ function renderSettings(){
     saveData(data);
     toast('تنظیمات ذخیره شد');
   });
+  document.getElementById('set-head-nurse-btn')?.addEventListener('click',function(){
+    const year=document.getElementById('head-year').value;
+    const month=document.getElementById('head-month').value;
+    const day=document.getElementById('head-day').value;
+    const shift=document.getElementById('head-shift').value;
+    const staffId=document.getElementById('head-staff').value;
+    if(!staffId){toast('پرسنلی برای انتخاب وجود ندارد');return;}
+    const dateKey=year+'-'+pad2(month)+'-'+pad2(day);
+    const sched=getSchedule(activeDept,parseInt(year),parseInt(month));
+    if(!sched[dateKey])sched[dateKey]={morning:{nurses:[],headNurse:null},evening:{nurses:[],headNurse:null},night:{nurses:[],headNurse:null}};
+    if(!sched[dateKey][shift])sched[dateKey][shift]={nurses:[],headNurse:null};
+    if(!sched[dateKey][shift].nurses.includes(staffId))sched[dateKey][shift].nurses.push(staffId);
+    sched[dateKey][shift].headNurse=staffId;
+    saveData(data);
+    renderSettings();
+    if(parseInt(year)===jy&&parseInt(month)===jm)renderSchedule();
+    toast('👑 سرپرست شیفت ثبت شد');
+  });
 }
+
+let currentConflictsList=[];
+function detectConflicts(){
+  const staffList=data.staff.filter(s=>s.supervisorId===currentUser.id);
+  const conflicts=[];
+  staffList.forEach(staff=>{
+    const dayShiftMap={};
+    const addItem=(date,shift,type,raw)=>{
+      if(!date)return;
+      const shifts=(shift==='all'||!shift)?['morning','evening','night']:[shift];
+      shifts.forEach(sh=>{
+        if(!dayShiftMap[date])dayShiftMap[date]={};
+        if(!dayShiftMap[date][sh])dayShiftMap[date][sh]=[];
+        dayShiftMap[date][sh].push({type,raw,shift:sh});
+      });
+    };
+    (staff.vacations||[]).forEach(v=>{
+      const parts=v.split(':');
+      addItem(parts[0],parts[1]||'all','vacation',v);
+    });
+    (staff.customShifts||[]).forEach(cs=>{
+      const parts=cs.split(':');
+      addItem(parts[0],parts[1],'custom_shift',cs);
+    });
+    (staff.notComeRequests||[]).forEach(nc=>{
+      addItem(nc.date,nc.shift,'not_come',nc);
+    });
+    Object.keys(dayShiftMap).forEach(date=>{
+      Object.keys(dayShiftMap[date]).forEach(sh=>{
+        const items=dayShiftMap[date][sh];
+        if(items.length>1){
+          conflicts.push({staffId:staff.id,staffName:staff.fullName,date,shift:sh,items});
+        }
+      });
+    });
+  });
+  return conflicts.sort((a,b)=>a.date.localeCompare(b.date));
+}
+function typeLabelFaShort(t){return t==='vacation'?'📅 مرخصی':t==='custom_shift'?'📋 شیفت سفارشی':t==='not_come'?'❌ نیامدن':t;}
+function renderConflicts(){
+  const el=document.getElementById('view-conflicts');
+  if(!isAdmin){el.innerHTML='<div class="card">🔒 برای دسترسی وارد شوید</div>';return;}
+  try{
+  currentConflictsList=detectConflicts();
+  let h='<div class="card"><h3>⚠️ تداخل‌های برنامه‌ریزی</h3>';
+  h+='<div style="font-size:12px;color:#888;margin-bottom:10px;">مواردی که یک پرسنل، دو یا چند وضعیت هم‌زمان (مثلاً هم مرخصی هم شیفت سفارشی) برای یک شیفت مشخص دارد. برای هرکدوم مشخص کنید کدام مورد باید بماند.</div>';
+  if(currentConflictsList.length===0){
+    h+='<div style="color:#28a745;font-size:13px;padding:10px;text-align:center;">✅ در حال حاضر هیچ تداخلی وجود ندارد</div>';
+  }else{
+    currentConflictsList.forEach((c,ci)=>{
+      const shLabel=c.shift==='morning'?'☀️ صبح':c.shift==='evening'?'🌤 عصر':'🌙 شب';
+      h+=`<div class="card" style="background:#fff3cd;margin-bottom:10px;">`;
+      h+=`<div style="font-size:13px;font-weight:bold;margin-bottom:6px;">👤 ${c.staffName} — 📆 ${formatDate(c.date)} — ${shLabel}</div>`;
+      h+='<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+      c.items.forEach((item,ii)=>{
+        h+=`<div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:12px;">
+          ${typeLabelFaShort(item.type)}
+          <button class="btn btn-success btn-sm" style="margin-right:6px;" onclick="resolveConflict(${ci},${ii})">✅ این را نگه دار</button>
+        </div>`;
+      });
+      h+='</div></div>';
+    });
+  }
+  h+='</div>';
+  el.innerHTML=h;
+  }catch(err){
+    console.error('renderConflicts error:',err);
+    el.innerHTML='<div class="card">⚠️ خطا در بارگذاری تداخل‌ها: '+err.message+'</div>';
+  }
+}
+window.resolveConflict=function(conflictIndex,keepItemIndex){
+  const c=currentConflictsList[conflictIndex];
+  if(!c)return;
+  const staff=data.staff.find(s=>s.id===c.staffId);
+  const nurse=data.nurses.find(n=>n.id===c.staffId);
+  if(!staff)return;
+  c.items.forEach((item,ii)=>{
+    if(ii===keepItemIndex)return; // این یکی نگه داشته می‌شود
+    if(item.type==='vacation'){
+      staff.vacations=(staff.vacations||[]).filter(v=>v!==item.raw);
+      if(nurse&&nurse.vacations)nurse.vacations=nurse.vacations.filter(v=>v!==item.raw);
+    }else if(item.type==='custom_shift'){
+      staff.customShifts=(staff.customShifts||[]).filter(v=>v!==item.raw);
+      if(nurse&&nurse.customShifts)nurse.customShifts=nurse.customShifts.filter(v=>v!==item.raw);
+    }else if(item.type==='not_come'){
+      staff.notComeRequests=(staff.notComeRequests||[]).filter(r=>!(r.date===item.raw.date&&r.shift===item.raw.shift));
+      if(nurse&&nurse.notComeRequests)nurse.notComeRequests=nurse.notComeRequests.filter(r=>!(r.date===item.raw.date&&r.shift===item.raw.shift));
+    }
+  });
+  saveData(data);
+  generateSchedule(activeDept,jy,jm);
+  renderConflicts();
+  renderSchedule();
+  toast('✅ تداخل برطرف شد');
+};
 
 function renderAll(){
   renderDeptRow();
@@ -1730,6 +2037,7 @@ function renderAll(){
   document.getElementById('view-notifications').classList.toggle('hidden',activeTab!=='notifications');
   document.getElementById('view-report').classList.toggle('hidden',activeTab!=='report');
   document.getElementById('view-rules').classList.toggle('hidden',activeTab!=='rules');
+  document.getElementById('view-conflicts').classList.toggle('hidden',activeTab!=='conflicts');
   document.getElementById('view-profile').classList.toggle('hidden',activeTab!=='profile');
   document.getElementById('view-settings').classList.toggle('hidden',activeTab!=='settings');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===activeTab));
@@ -1739,6 +2047,7 @@ function renderAll(){
   else if(activeTab==='notifications')renderNotifications();
   else if(activeTab==='report')renderReport();
   else if(activeTab==='rules')renderRules();
+  else if(activeTab==='conflicts')renderConflicts();
   else if(activeTab==='profile')renderProfile();
   else if(activeTab==='settings')renderSettings();
   updateNotifications();
@@ -1886,6 +2195,15 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   document.addEventListener('change',function(e){
     if(!isAdmin)return;
+    if(e.target.classList&&e.target.classList.contains('quota-input')){
+      const staffId=e.target.dataset.staff;
+      const key=staffId+'_'+jy+'_'+jm;
+      if(!data.monthlyQuotas)data.monthlyQuotas={};
+      data.monthlyQuotas[key]=parseInt(e.target.value)||0;
+      saveData(data);
+      renderRules();
+      return;
+    }
     if(e.target.dataset&&e.target.dataset.role==='add-nurse'){
       const nid=e.target.value;
       if(!nid)return;
