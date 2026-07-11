@@ -142,6 +142,14 @@ h1{font-size:22px;color:#1a3c5e;}
         <select id="request-day"></select>
       </div>
     </div>
+    <div class="row">
+      <label>تا تاریخ (اختیاری، برای چند روز):</label>
+      <div style="display:flex;gap:4px;">
+        <select id="request-end-year"><option value="">—</option></select>
+        <select id="request-end-month"><option value="">—</option></select>
+        <select id="request-end-day"><option value="">—</option></select>
+      </div>
+    </div>
     <div class="row" id="shift-select-row">
       <label>شیفت:</label>
       <select id="request-shift">
@@ -471,6 +479,29 @@ function populateRequestDateSelects() {
     if (d === today.jd) opt.selected = true;
     daySel.appendChild(opt);
   }
+  const eYearSel = document.getElementById('request-end-year');
+  const eMonthSel = document.getElementById('request-end-month');
+  const eDaySel = document.getElementById('request-end-day');
+  if (eYearSel && eMonthSel && eDaySel) {
+    eYearSel.innerHTML = '<option value="">—</option>';
+    for (let y = today.jy - 1; y <= today.jy + 1; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = faDigits(y);
+      eYearSel.appendChild(opt);
+    }
+    eMonthSel.innerHTML = '<option value="">—</option>';
+    JMONTHS.forEach((mName, i) => {
+      const opt = document.createElement('option');
+      opt.value = i + 1; opt.textContent = mName;
+      eMonthSel.appendChild(opt);
+    });
+    eDaySel.innerHTML = '<option value="">—</option>';
+    for (let d = 1; d <= 31; d++) {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = faDigits(d);
+      eDaySel.appendChild(opt);
+    }
+  }
 }
 
 function renderNurseSchedule() {
@@ -593,7 +624,7 @@ function renderNurseRequests() {
     
     h += `<tr>
       <td>${typeLabel}</td>
-      <td>${formatDate ? formatDate(details.date || '') : (details.date || '')}</td>
+      <td>${details.endDate && details.endDate !== details.date ? (formatDate(details.date) + ' تا ' + formatDate(details.endDate)) : formatDate(details.date || '')}</td>
       <td>${shiftLabel}</td>
       <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
       <td>${r.message || '---'}</td>
@@ -772,6 +803,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const shift = document.getElementById('request-shift').value;
     const desc = document.getElementById('request-desc').value.trim();
     const date = year + '-' + pad2(month) + '-' + pad2(day);
+    const eYear = document.getElementById('request-end-year')?.value;
+    const eMonth = document.getElementById('request-end-month')?.value;
+    const eDay = document.getElementById('request-end-day')?.value;
+    const endDate = (eYear && eMonth && eDay) ? (eYear + '-' + pad2(eMonth) + '-' + pad2(eDay)) : '';
     
     // ثبت درخواست (در آرایهٔ staffRequests تا سرپرستار ببیندش)
     if (!data.staffRequests) data.staffRequests = [];
@@ -782,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function() {
       staffId: currentNurse.id,
       staffName: currentNurse.fullName || currentNurse.name,
       type: type,
-      details: { date: date, shift: shift },
+      details: { date: date, endDate: endDate, shift: shift },
       status: 'pending',
       message: desc,
       createdAt: new Date().toISOString()
