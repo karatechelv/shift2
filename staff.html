@@ -667,6 +667,10 @@ function findNurseByCodeAndPass(code, pass) {
 // ================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  ['nurse-code','nurse-pass'].forEach(id=>{
+    const elx=document.getElementById(id);
+    if(elx)elx.addEventListener('input',function(){const s=this.selectionStart;this.value=toLatinDigits(this.value);try{this.setSelectionRange(s,s);}catch(e){}});
+  });
   // بارگذاری داده‌ها
   if (!loadData()) {
     // اگر داده‌ای نبود، داده‌های نمونه ایجاد کن
